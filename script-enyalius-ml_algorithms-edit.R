@@ -1,7 +1,7 @@
 ### Installing and loading necessary packages
 
 #install.packages("mice")
-install.packages("tidyverse")
+#install.packages("tidyverse")
 #install.packages("readxl")
 #install.packages("caret")
 #install.packages("e1071")
@@ -11,7 +11,7 @@ install.packages("tidyverse")
 #install.packages("kernlab")
 #install.packages("xgboost")
 #install.packages("fastDummies")
-install.packages("devtools")
+#install.packages("devtools")
 #install.packages("pROC")
 #install.packages("plotly")
 #install.packages("tidymodels")
