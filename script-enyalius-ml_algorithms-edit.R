@@ -25,7 +25,6 @@ library(multiROC)
 library(mice)
 library(tidyverse)
 library(readxl)
-
 library(caret)
 library(e1071)
 library(glmnet)
@@ -39,6 +38,27 @@ library(fastDummies)
 
 # Setting working directory
 setwd("./") #change it according to your specific path
+
+default_mllist <- list("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")
+
+comp_alg <- function(data, list_alg, train_val) {
+  models.list <- caret::modelLookup()$model
+  models.list
+
+  pred <- list(train = list(), fitted, cf = list())
+  set.seed(42) 
+  for (method in list_alg) {
+    train <- train(data$final_species_name ~.,
+               data = data$trainingSet_final,
+               method = method,
+               metric = "Accuracy",
+               trControl = ctrl) 
+    fitted <- predict(knn_train, testSet_final)
+    cf <- confusionMatrix(reference = testSet_final$final_species_name,
+               data = fittedknn,
+               mode = "everything") 
+  }
+}
 
 # Importing our lizard data set
 data_enyalius <- read_xlsx("herp-74-04-335_s02-edit.xlsx",
@@ -144,7 +164,7 @@ ctrl <- trainControl(method = "repeatedcv", classProbs = TRUE, number = 5,
                      repeats = 5, summaryFunction = defaultSummary)
 
 ### Predicting
-
+comp_alg(list(final_species_name, trainingSet_final), default_mllist, 0.7)
 # rpart (decision tress)
 set.seed(42) 
 rpart <- train(final_species_name ~.,
@@ -183,18 +203,6 @@ svm_linear <- train(final_species_name ~.,
 fittedsvm <- predict(svm_linear, testSet_final)
 cf_svm <- confusionMatrix(reference = testSet_final$final_species_name,
                 data = fittedsvm,
-                mode = "everything")
-
-# Random forest
-set.seed(42) 
-rf <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "rf",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittedrf <- predict(rf, testSet_final)
-cf_rf <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittedrf,
                 mode = "everything")
 
 # Random forest
