@@ -39,25 +39,68 @@ library(fastDummies)
 # Setting working directory
 setwd("./") #change it according to your specific path
 
+# Random Forest, SVM, KNN, MLP, RPART, Naive Bayes.
 default_mllist <- list("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")
 
-comp_alg <- function(data, list_alg, train_val) {
-  models.list <- caret::modelLookup()$model
-  models.list
+comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
+  #models.list <- caret::modelLookup()$model
+  #models.list
 
-  pred <- list(train = list(), fitted, cf = list())
-  set.seed(42) 
-  for (method in list_alg) {
-    train <- train(data$final_species_name ~.,
-               data = data$trainingSet_final,
-               method = method,
-               metric = "Accuracy",
-               trControl = ctrl) 
-    fitted <- predict(knn_train, testSet_final)
-    cf <- confusionMatrix(reference = testSet_final$final_species_name,
-               data = fittedknn,
-               mode = "everything") 
+  # Carregar pacotes necessários e garantir que eles sejam carregados após instalação
+  if (!require("kernlab")) {install.packages("kernlab", dependencies=TRUE); library(kernlab)}  # Para SVM
+  if (!require("klaR")) {install.packages("klaR", dependencies=TRUE); library(klaR)}  # Para Naive Bayes
+  if (!require("RSNNS")) {install.packages("RSNNS", dependencies=TRUE); library(RSNNS)}  # Para MLP
+  if (!require("rpart")) {install.packages("rpart", dependencies=TRUE); library(rpart)}  # Para CART
+  if (!require("randomForest")) {install.packages("randomForest", dependencies=TRUE); library(randomForest)}  # Para Random Forest
+  if (!require("caret")) {install.packages("caret", dependencies=TRUE); library(caret)}
+  
+  # Definir seed para reprodutibilidade
+  set.seed(seed)
+  
+  # Dividir os dados em treino e teste
+  in_training <- createDataPartition(y = data[, ncol(data)],
+                                     p = train_val, 
+                                     list = F)
+  train_set <- data[in_training,]
+  test_set <- data[-in_training,]
+  
+  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
+  dependent_variable <- train_set[,ncol(train_set)]
+  dependent_test_set <- test_set[,ncol(test_set)]
+  
+  # Definir controle do treino (Validação Cruzada com n folds)
+  train_control <- trainControl(method = "cv", number = cv_folds)
+  
+  # Lista para armazenar os modelos treinados
+  model_results <- list()
+  
+  # Loop para treinar cada algoritmo
+  for (alg in list_alg) {
+    print(paste("Treinando o modelo com algoritmo:", alg))
+    
+    # Treinar o modelo com o algoritmo atual
+    model <- caret::train(x = final_train_set,
+                   y = dependent_variable, 
+                   method = alg, 
+                   trControl = train_control, 
+                   metric = "Accuracy")
+    
+    # Armazenar o modelo treinado na lista
+    model_results[[alg]] <- model
   }
+  
+  # Avaliar o desempenho no conjunto de teste #### MUDAR
+  evaluation_results <- list()
+  for (alg in list_alg) {
+    print(paste("Avaliando o modelo com algoritmo:", alg))
+    predictions <- predict(model_results[[alg]], newdata = test_set)
+    confusion_matrix <- confusionMatrix(predictions, dependent_test_set)
+    evaluation_results[[alg]] <- confusion_matrix
+    print(confusion_matrix)
+  }
+  
+  # Retornar os resultados dos modelos e as avaliações
+  return(list(models = model_results, evaluations = evaluation_results))
 }
 
 # Importing our lizard data set
@@ -164,7 +207,12 @@ ctrl <- trainControl(method = "repeatedcv", classProbs = TRUE, number = 5,
                      repeats = 5, summaryFunction = defaultSummary)
 
 ### Predicting
-comp_alg(list(final_species_name, trainingSet_final), default_mllist, 0.7)
+results <- comp_alg(list(final_species_name, trainingSet_final), 
+                    default_mllist, 
+                    train_val = 0.75,
+                    cv_folds = 5,
+                    seed = 123)
+
 # rpart (decision tress)
 set.seed(42) 
 rpart <- train(final_species_name ~.,
