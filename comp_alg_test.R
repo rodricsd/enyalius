@@ -1,12 +1,12 @@
-### Função
+### Funï¿½ï¿½o
 comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
-  # Carregar pacotes necessários e garantir que eles sejam carregados após instalação
+  # Carregar pacotes necessï¿½rios e garantir que eles sejam carregados apï¿½s instalaï¿½ï¿½o
   if (!require("kernlab")) {install.packages("kernlab", dependencies=TRUE); library(kernlab)}  # Para SVM
   if (!require("klaR")) {install.packages("klaR", dependencies=TRUE); library(klaR)}  # Para Naive Bayes
   if (!require("RSNNS")) {install.packages("RSNNS", dependencies=TRUE); library(RSNNS)}  # Para MLP
   if (!require("rpart")) {install.packages("rpart", dependencies=TRUE); library(rpart)}  # Para CART
   if (!require("randomForest")) {install.packages("randomForest", dependencies=TRUE); library(randomForest)}  # Para Random Forest
-  if (!require("caret")) {install.packages("caret", dependencies=TRUE); library(caret)}
+  if (!require("caret")) {install.packages("caret", dependencies=TRUE); library(caret)}R
   
   # Definir seed para reprodutibilidade
   set.seed(seed)
@@ -18,11 +18,11 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   train_set <- data[in_training,]
   test_set <- data[-in_training,]
   
-  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
+  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variï¿½vel resposta estï¿½ na ï¿½ltima coluna
   dependent_variable <- train_set[,ncol(train_set)]
   dependent_test_set <- test_set[,ncol(test_set)]
   
-  # Definir controle do treino (Validação Cruzada com n folds)
+  # Definir controle do treino (Validaï¿½ï¿½o Cruzada com n folds)
   train_control <- trainControl(method = "cv", number = cv_folds)
   
   # Lista para armazenar os modelos treinados
@@ -53,11 +53,11 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
     print(confusion_matrix)
   }
   
-  # Retornar os resultados dos modelos e as avaliações
+  # Retornar os resultados dos modelos e as avaliaï¿½ï¿½es
   return(list(models = model_results, evaluations = evaluation_results))
 }
 
-# Testando a função com o dataset 'iris'
+# Testando a funï¿½ï¿½o com o dataset 'iris'
 library(datasets)
 iris <- datasets::iris
 
@@ -68,13 +68,15 @@ results <- comp_alg(data = iris,
                     seed = 123,
                     cv_folds = 5)
 
+
+
 #results$acuracia
 #Acuracia RF: 0.97
 
 
 ### A fazer:
-#1 Especificar um valor default para o trainControl dentro da nossa função, 
-# mas dar a liberdade ao usuário de colocar o seu próprio input
+#1 Especificar um valor default para o trainControl dentro da nossa funï¿½ï¿½o, 
+# mas dar a liberdade ao usuï¿½rio de colocar o seu prï¿½prio input
 
-#2 Mudar output da função. Encontrar uma forma em que a função retorne
-# a acurácia de cada modelo, rankeando do melhor para o pior
+#2 Mudar output da funï¿½ï¿½o. Encontrar uma forma em que a funï¿½ï¿½o retorne
+# a acurï¿½cia de cada modelo, rankeando do melhor para o pior
