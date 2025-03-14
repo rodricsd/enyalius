@@ -16,6 +16,11 @@
 #install.packages("plotly")
 #install.packages("tidymodels")
 #install.packages("multiROC")
+#install.packages("kernlab", dependencies=TRUE)
+#install.packages("klaR", dependencies=TRUE)
+#install.packages("RSNNS", dependencies=TRUE)
+#install.packages("rpart", dependencies=TRUE)
+#install.packages("randomForest", dependencies=TRUE)
 
 library(plotly)
 library(tidymodels)
@@ -33,6 +38,11 @@ library(caretEnsemble)
 library(kernlab)
 library(xgboost)
 library(fastDummies)
+library(randomForest)
+library(rpart)
+library(RSNNS)
+library(klaR)
+library(kernlab)
 
 ### Loading the data set
 
@@ -45,14 +55,6 @@ default_mllist <- list("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")
 comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   #models.list <- caret::modelLookup()$model
   #models.list
-
-  # Carregar pacotes necessários e garantir que eles sejam carregados após instalação
-  if (!require("kernlab")) {install.packages("kernlab", dependencies=TRUE); library(kernlab)}  # Para SVM
-  if (!require("klaR")) {install.packages("klaR", dependencies=TRUE); library(klaR)}  # Para Naive Bayes
-  if (!require("RSNNS")) {install.packages("RSNNS", dependencies=TRUE); library(RSNNS)}  # Para MLP
-  if (!require("rpart")) {install.packages("rpart", dependencies=TRUE); library(rpart)}  # Para CART
-  if (!require("randomForest")) {install.packages("randomForest", dependencies=TRUE); library(randomForest)}  # Para Random Forest
-  if (!require("caret")) {install.packages("caret", dependencies=TRUE); library(caret)}
   
   # Definir seed para reprodutibilidade
   set.seed(seed)
