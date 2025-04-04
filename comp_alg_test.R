@@ -22,7 +22,10 @@ library(kernlab)
 
 
 ### Fun��o
-comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {  
+comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
+  if (!length(list_alg))  {
+    list_alg <- c("rf", "knn", "rpart", "nb", "mlp") 
+  }
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
@@ -38,7 +41,8 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   dependent_test_set <- test_set[,ncol(test_set)]
   
   # Definir controle do treino (Valida��o Cruzada com n folds)
-  train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10) 
+  #train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10) 
+  train_control <- 
   
   # Lista para armazenar os modelos treinados
   model_results <- list()
