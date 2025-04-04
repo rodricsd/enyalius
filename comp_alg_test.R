@@ -42,7 +42,7 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   
   # Definir controle do treino (Valida��o Cruzada com n folds)
   #train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10) 
-  train_control <- 
+  train_control <- 0.75
   
   # Lista para armazenar os modelos treinados
   model_results <- list()
