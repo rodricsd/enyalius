@@ -24,7 +24,7 @@ library(kernlab)
 ### Fun��o
 comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   if (!length(list_alg))  {
-    list_alg <- c("rf", "knn", "rpart", "nb", "mlp") 
+    list_alg <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") 
   }
   # Definir seed para reprodutibilidade
   set.seed(seed)
@@ -80,7 +80,7 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
 library(datasets)
 iris <- datasets::iris
 
-default_mllist <- c("rf", "knn", "rpart", "nb", "mlp")
+default_mllist <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")
 results <- comp_alg(data = iris,
                     list_alg = default_mllist,
                     train_val = 0.75,
