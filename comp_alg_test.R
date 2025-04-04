@@ -1,13 +1,28 @@
+library(plotly)
+library(tidymodels)
+library(pROC)
+library(devtools)
+library(multiROC)
+library(mice)
+library(tidyverse)
+library(readxl)
+library(caret)
+library(e1071)
+library(glmnet)
+library(MLmetrics)
+library(caretEnsemble)
+library(kernlab)
+library(xgboost)
+library(fastDummies)
+library(randomForest)
+library(rpart)
+library(RSNNS)
+library(klaR)
+library(kernlab)
+
+
 ### Fun��o
-comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
-  # Carregar pacotes necess�rios e garantir que eles sejam carregados ap�s instala��o
-  if (!require("kernlab")) {install.packages("kernlab", dependencies=TRUE); library(kernlab)}  # Para SVM
-  if (!require("klaR")) {install.packages("klaR", dependencies=TRUE); library(klaR)}  # Para Naive Bayes
-  if (!require("RSNNS")) {install.packages("RSNNS", dependencies=TRUE); library(RSNNS)}  # Para MLP
-  if (!require("rpart")) {install.packages("rpart", dependencies=TRUE); library(rpart)}  # Para CART
-  if (!require("randomForest")) {install.packages("randomForest", dependencies=TRUE); library(randomForest)}  # Para Random Forest
-  if (!require("caret")) {install.packages("caret", dependencies=TRUE); library(caret)}R
-  
+comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {  
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
