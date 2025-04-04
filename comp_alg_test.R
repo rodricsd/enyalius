@@ -20,7 +20,6 @@ library(RSNNS)
 library(klaR)
 library(kernlab)
 
-
 ### Fun��o
 comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   if (!length(list_alg))  {
@@ -41,8 +40,8 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   dependent_test_set <- test_set[,ncol(test_set)]
   
   # Definir controle do treino (Valida��o Cruzada com n folds)
-  #train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10) 
-  train_control <- 0.75
+  train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10) 
+  #train_control <- 0.75
   
   # Lista para armazenar os modelos treinados
   model_results <- list()
@@ -80,7 +79,7 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
 library(datasets)
 iris <- datasets::iris
 
-default_mllist <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")
+default_mllist <- list()
 results <- comp_alg(data = iris,
                     list_alg = default_mllist,
                     train_val = 0.75,
