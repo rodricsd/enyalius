@@ -21,10 +21,17 @@ library(klaR)
 library(kernlab)
 
 ### Fun��o
-comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
-  if (!length(list_alg))  {
-    list_alg <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") 
-  }
+comp_alg <- function(data, 
+                     list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") , 
+                     train_val = 0.75, 
+                     cv_folds, 
+                     seed = 123, 
+                     number = 5, 
+                     repeats = 10) 
+{
+  #if (!length(list_alg)) {
+  #  list_alg <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") 
+  #}
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
@@ -40,8 +47,7 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   dependent_test_set <- test_set[,ncol(test_set)]
   
   # Definir controle do treino (Valida��o Cruzada com n folds)
-  train_control <- trainControl(method = "repeatedcv", number = 5, repeats = 10) 
-  #train_control <- 0.75
+  train_control <- trainControl(method = "repeatedcv", number = number, repeats = repeats) 
   
   # Lista para armazenar os modelos treinados
   model_results <- list()
@@ -72,21 +78,20 @@ comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
   }
   
   # Retornar os resultados dos modelos e as avalia��es
-  return(list(models = model_results, evaluations = evaluation_results))
+  return(data.frame(models = model_results, evaluations = evaluation_results))
 }
 
 # Testando a fun��o com o dataset 'iris'
 library(datasets)
 iris <- datasets::iris
 
-default_mllist <- list()
 results <- comp_alg(data = iris,
-                    list_alg = default_mllist,
-                    train_val = 0.75,
-                    seed = 123,
+                    list_alg,
+                    train_val,
+                    seed,
                     cv_folds = 5)
 
-
+print(results)
 
 #results$acuracia
 #Acuracia RF: 0.97
