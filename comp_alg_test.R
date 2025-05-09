@@ -18,7 +18,6 @@ library(randomForest)
 library(rpart)
 library(RSNNS)
 library(klaR)
-library(kernlab)
 
 ### Fun��o
 comp_alg <- function(data, 
@@ -28,10 +27,7 @@ comp_alg <- function(data,
                      seed = 123, 
                      number = 5, 
                      repeats = 10) 
-{
-  #if (!length(list_alg)) {
-  #  list_alg <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") 
-  #}
+  {  
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
@@ -78,28 +74,50 @@ comp_alg <- function(data,
   }
   
   # Retornar os resultados dos modelos e as avalia��es
-  return(data.frame(models = model_results, evaluations = evaluation_results))
-}
+  return(list(m_names = list_alg, models = model_results, evaluations = evaluation_results))
+  }
 
 # Testando a fun��o com o dataset 'iris'
 library(datasets)
 iris <- datasets::iris
 
+seed <- 42
+
 results <- comp_alg(data = iris,
-                    list_alg,
-                    train_val,
-                    seed,
+                    train_val = 0.8,
+                    seed = seed,
                     cv_folds = 5)
 
-print(results)
+#df_results <- do.call(rbind.data.frame, results$models)
+
+accuracy_list <- list()
+kappa_list <- list()
+for (x in results$m_names) {
+  accuracy_list[[x]] <- results$models$results[1, "Accuracy"]
+  kappa_list[[x]] <- results$models$results[1, "Kappa"]
+}
+
+res_scores <- data.frame(models_names = results$m_names,
+                         accuracy = accuracy_list,
+                         kappa = kappa_list)
+summary(res_scores)
+
+
+#print(results)
 
 #results$acuracia
 #Acuracia RF: 0.97
 
 
 ### A fazer:
-#1 Especificar um valor default para o trainControl dentro da nossa fun��o, 
-# mas dar a liberdade ao usu�rio de colocar o seu pr�prio input
+## 1 Usar a fun��o postResample para obter acur�cia e kappa para cada um dos algoritmos
+# Armazenar estes resultados em uma lista separada
+# Transformar esta lista em data frame e colocar isso no return da fun��o
+# Links uteis:
+# https://topepo.github.io/caret/measuring-performance.html#measures-for-class-probabilities
+# https://www.rdocumentation.org/packages/purrr/versions/0.2.5/topics/map
 
-#2 Mudar output da fun��o. Encontrar uma forma em que a fun��o retorne
-# a acur�cia de cada modelo, rankeando do melhor para o pior
+## 2 No dataframe reportado como resultado, rankear os modelos, do melhor para o pior
+
+## 3 Encontrar um jeito de fazer a divis�o entre treino e teste de forma que n�o seja
+# necess�rio assumir que a vari�vel resposta est� na �ltima coluna
