@@ -93,14 +93,14 @@ results <- comp_alg(data = iris,
 accuracy_list <- list()
 kappa_list <- list()
 for (x in results$m_names) {
-  accuracy_list[[x]] <- results$models$results[1, "Accuracy"]
-  kappa_list[[x]] <- results$models$results[1, "Kappa"]
+  accuracy_list[[x]] <- results$models[[x]]$results[1, "Accuracy"]
+  kappa_list[[x]] <- results$models[[x]]$results[1, "Kappa"]
 }
 
 res_scores <- data.frame(models_names = results$m_names,
                          accuracy = accuracy_list,
                          kappa = kappa_list)
-summary(res_scores)
+res_scores
 
 
 #print(results)
