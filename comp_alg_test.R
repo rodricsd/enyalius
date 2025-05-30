@@ -66,6 +66,7 @@ comp_alg <- function(data,
   
   # Avaliar o desempenho no conjunto de teste #### MUDAR
   evaluation_results <- list()
+  print(list_alg)
   for (alg in list_alg) {
     print(paste("Avaliando o modelo com algoritmo:", alg))
     predictions <- predict(model_results[[alg]], newdata = test_set)
@@ -79,7 +80,7 @@ comp_alg <- function(data,
   accuracy_sd <- c()
   kappa <- c()
   kappa_sd <- c()
-  for (x in results$m_names) {
+  for (x in list_alg) {
     accuracy[x] <- max(model_results[[x]]$results["Accuracy"])
     accuracy_sd[x] <- max(model_results[[x]]$results["AccuracySD"])
     kappa[x] <- model_results[[x]]$results[1, "Kappa"]
@@ -91,7 +92,7 @@ comp_alg <- function(data,
                            kappa = kappa,
                            kappa_sd = kappa_sd)
   
-  for (x in results$m_names) {
+  for (x in list_alg) {
     max_accuracy <- max(model_results[[x]]$results["Accuracy"])
     data <- subset(model_results[[x]]$results, Accuracy == max_accuracy)
     data <- select(data, Accuracy, Kappa, AccuracySD, KappaSD)
@@ -104,8 +105,7 @@ comp_alg <- function(data,
   return(list(m_names = list_alg, 
               models = model_results, 
               evaluations = evaluation_results,
-              order1 = res_scores[order(res_scores$accuracy, decreasing = T),],))
-              #order2 = res_scores_df[order(res_scores_df$Accuracy, decreasing = T),]))
+              order1 = res_scores[order(res_scores$accuracy, decreasing = T),]))
 }
 
 # Testando a função com o dataset 'iris'
@@ -121,7 +121,7 @@ results <- comp_alg(data = iris,
                     verbose = FALSE)
 
 results$order1
-#results$order2
+results$order2
 
 #print(results)
 #results$acuracia
