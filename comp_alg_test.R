@@ -19,15 +19,16 @@ library(rpart)
 library(RSNNS)
 library(klaR)
 
-### Fun��o
+### Função
 comp_alg <- function(data, 
                      list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") , 
                      train_val = 0.75, 
                      cv_folds, 
                      seed = 123, 
                      number = 5, 
-                     repeats = 10) 
-  {  
+                     repeats = 10,
+                     verbose) 
+{  
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
@@ -38,11 +39,11 @@ comp_alg <- function(data,
   train_set <- data[in_training,]
   test_set <- data[-in_training,]
   
-  final_train_set <- train_set[,-ncol(train_set)] # Assume que a vari�vel resposta est� na �ltima coluna
+  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
   dependent_variable <- train_set[,ncol(train_set)]
   dependent_test_set <- test_set[,ncol(test_set)]
   
-  # Definir controle do treino (Valida��o Cruzada com n folds)
+  # Definir controle do treino (Validação Cruzada com n folds)
   train_control <- trainControl(method = "repeatedcv", number = number, repeats = repeats) 
   
   # Lista para armazenar os modelos treinados
@@ -54,10 +55,10 @@ comp_alg <- function(data,
     
     # Treinar o modelo com o algoritmo atual
     model <- caret::train(x = final_train_set,
-                   y = dependent_variable, 
-                   method = alg, 
-                   trControl = train_control, 
-                   metric = "Accuracy")
+                          y = dependent_variable, 
+                          method = alg, 
+                          trControl = train_control, 
+                          metric = "Accuracy")
     
     # Armazenar o modelo treinado na lista
     model_results[[alg]] <- model
@@ -70,14 +71,44 @@ comp_alg <- function(data,
     predictions <- predict(model_results[[alg]], newdata = test_set)
     confusion_matrix <- confusionMatrix(predictions, dependent_test_set)
     evaluation_results[[alg]] <- confusion_matrix
-    print(confusion_matrix)
+    if (verbose)
+      print(confusion_matrix)
   }
   
-  # Retornar os resultados dos modelos e as avalia��es
-  return(list(m_names = list_alg, models = model_results, evaluations = evaluation_results))
+  accuracy <- c()
+  accuracy_sd <- c()
+  kappa <- c()
+  kappa_sd <- c()
+  for (x in results$m_names) {
+    accuracy[x] <- max(model_results[[x]]$results["Accuracy"])
+    accuracy_sd[x] <- max(model_results[[x]]$results["AccuracySD"])
+    kappa[x] <- model_results[[x]]$results[1, "Kappa"]
+    kappa_sd[x] <- model_results[[x]]$results[1, "KappaSD"]
   }
+  
+  res_scores <- data.frame(accuracy = accuracy,
+                           accuracy_sd = accuracy_sd,
+                           kappa = kappa,
+                           kappa_sd = kappa_sd)
+  
+  for (x in results$m_names) {
+    max_accuracy <- max(model_results[[x]]$results["Accuracy"])
+    data <- subset(model_results[[x]]$results, Accuracy == max_accuracy)
+    data <- select(data, Accuracy, Kappa, AccuracySD, KappaSD)
+    res_scores_df <- rbind(res_scores_df, data)
+  }
+  print("Ok!")
+  
+  # res_scores_order <- res_scores[order(res_scores$accuracy, decreasing = T),]
+  # Retornar os resultados dos modelos e as avaliações
+  return(list(m_names = list_alg, 
+              models = model_results, 
+              evaluations = evaluation_results,
+              order1 = res_scores[order(res_scores$accuracy, decreasing = T),],))
+              #order2 = res_scores_df[order(res_scores_df$Accuracy, decreasing = T),]))
+}
 
-# Testando a fun��o com o dataset 'iris'
+# Testando a função com o dataset 'iris'
 library(datasets)
 iris <- datasets::iris
 
@@ -86,38 +117,29 @@ seed <- 42
 results <- comp_alg(data = iris,
                     train_val = 0.8,
                     seed = seed,
-                    cv_folds = 5)
+                    cv_folds = 5,
+                    verbose = FALSE)
 
-#df_results <- do.call(rbind.data.frame, results$models)
-
-accuracy_list <- list()
-kappa_list <- list()
-for (x in results$m_names) {
-  accuracy_list[[x]] <- results$models[[x]]$results[1, "Accuracy"]
-  kappa_list[[x]] <- results$models[[x]]$results[1, "Kappa"]
-}
-
-res_scores <- data.frame(models_names = results$m_names,
-                         accuracy = accuracy_list,
-                         kappa = kappa_list)
-res_scores
-
+results$order1
+#results$order2
 
 #print(results)
-
 #results$acuracia
 #Acuracia RF: 0.97
 
-
 ### A fazer:
-## 1 Usar a fun��o postResample para obter acur�cia e kappa para cada um dos algoritmos
+## 1 Combinar as duas funções em uma só, colocando o for loop da acurácia dentro da função anterior
+
+## 2 Dar uma opção de quiet mode OU verbose, para visualizar ou não o andamento da função no console
+# argumento na função para reportar na tela ou não
+
+## 3 Encontrar um jeito de fazer a divisão entre treino e teste de forma que não seja
+# necessário assumir que a variável resposta esteja na última coluna
+
+## OBS: NÃO É MAIS NECESSÁRIO
+# Usar a função postResample para obter acurácia e kappa para cada um dos algoritmos
 # Armazenar estes resultados em uma lista separada
-# Transformar esta lista em data frame e colocar isso no return da fun��o
+# Transformar esta lista em data frame e colocar isso no return da função
 # Links uteis:
 # https://topepo.github.io/caret/measuring-performance.html#measures-for-class-probabilities
 # https://www.rdocumentation.org/packages/purrr/versions/0.2.5/topics/map
-
-## 2 No dataframe reportado como resultado, rankear os modelos, do melhor para o pior
-
-## 3 Encontrar um jeito de fazer a divis�o entre treino e teste de forma que n�o seja
-# necess�rio assumir que a vari�vel resposta est� na �ltima coluna
