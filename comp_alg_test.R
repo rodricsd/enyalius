@@ -21,37 +21,48 @@ library(klaR)
 
 ### Função
 comp_alg <- function(data, 
+                     target,
                      list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") , 
                      train_val = 0.75, 
-                     cv_folds, 
+                     cv_folds = 5, 
                      seed = 123, 
                      number = 5, 
                      repeats = 10,
-                     verbose) 
+                     verbose = TRUE) 
 {  
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
   # Dividir os dados em treino e teste
-  in_training <- createDataPartition(y = data[, ncol(data)],
+  in_training <- createDataPartition(y = data[[target]],
                                      p = train_val, 
-                                     list = F)
+                                     list = FALSE)
   train_set <- data[in_training,]
   test_set <- data[-in_training,]
   
-  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
-  dependent_variable <- train_set[,ncol(train_set)]
-  dependent_test_set <- test_set[,ncol(test_set)]
+  #final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
+  #dependent_variable <- train_set[,ncol(train_set)]
+  #dependent_test_set <- test_set[,ncol(test_set)]
+  
+  final_train_set <- dplyr::select(train_set, -all_of(target))  # preditores
+  dependent_variable <- train_set[[target]]                     # resposta de treino
+  dependent_test_set <- test_set[[target]]                     # resposta de teste
   
   # Definir controle do treino (Validação Cruzada com n folds)
   train_control <- trainControl(method = "repeatedcv", number = number, repeats = repeats) 
   
   # Lista para armazenar os modelos treinados
   model_results <- list()
+  evaluation_results <- list()
+  
+  accuracy <- c()
+  accuracy_sd <- c()
+  kappa <- c()
+  kappa_sd <- c()
   
   # Loop para treinar cada algoritmo
   for (alg in list_alg) {
-    print(paste("Treinando o modelo com algoritmo:", alg))
+    cat("Training algorithm:", alg, "\n")
     
     # Treinar o modelo com o algoritmo atual
     model <- caret::train(x = final_train_set,
@@ -62,29 +73,19 @@ comp_alg <- function(data,
     
     # Armazenar o modelo treinado na lista
     model_results[[alg]] <- model
-  }
   
-  # Avaliar o desempenho no conjunto de teste #### MUDAR
-  evaluation_results <- list()
-  print(list_alg)
-  for (alg in list_alg) {
-    print(paste("Avaliando o modelo com algoritmo:", alg))
-    predictions <- predict(model_results[[alg]], newdata = test_set)
+    # Previsoes no teste
+    predictions <- predict(model, dplyr::select(test_set, -all_of(target)))
     confusion_matrix <- confusionMatrix(predictions, dependent_test_set)
     evaluation_results[[alg]] <- confusion_matrix
-    if (verbose)
-      print(confusion_matrix)
-  }
+    if (verbose) print(confusion_matrix)
   
-  accuracy <- c()
-  accuracy_sd <- c()
-  kappa <- c()
-  kappa_sd <- c()
-  for (x in list_alg) {
-    accuracy[x] <- max(model_results[[x]]$results["Accuracy"])
-    accuracy_sd[x] <- max(model_results[[x]]$results["AccuracySD"])
-    kappa[x] <- model_results[[x]]$results[1, "Kappa"]
-    kappa_sd[x] <- model_results[[x]]$results[1, "KappaSD"]
+    # Obter o modelo treinado com maior acuracia
+    best_index <- which.max(model$results$Accuracy)
+    accuracy[alg] <- model$results$Accuracy[best_index]
+    accuracy_sd[alg] <- model$results$AccuracySD[best_index]
+    kappa[alg] <- model$results$Kappa[best_index]
+    kappa_sd[alg] <- model$results$KappaSD[best_index]
   }
   
   res_scores <- data.frame(accuracy = accuracy,
@@ -92,36 +93,34 @@ comp_alg <- function(data,
                            kappa = kappa,
                            kappa_sd = kappa_sd)
   
-  for (x in list_alg) {
-    max_accuracy <- max(model_results[[x]]$results["Accuracy"])
-    data <- subset(model_results[[x]]$results, Accuracy == max_accuracy)
-    data <- select(data, Accuracy, Kappa, AccuracySD, KappaSD)
-    res_scores_df <- rbind(res_scores_df, data)
-  }
-  print("Ok!")
+  res_scores_ordered <- res_scores[order(res_scores$accuracy, decreasing = TRUE), ]
+  best_model <- res_scores_ordered$algorithm[1]
   
-  # res_scores_order <- res_scores[order(res_scores$accuracy, decreasing = T),]
   # Retornar os resultados dos modelos e as avaliações
-  return(list(m_names = list_alg, 
-              models = model_results, 
-              evaluations = evaluation_results,
-              order1 = res_scores[order(res_scores$accuracy, decreasing = T),]))
+  return(list(
+    model_names = list_alg, 
+    models = model_results, 
+    evaluations = evaluation_results,
+    metrics = res_scores_ordered,
+    best_model = best_model
+    ))
 }
 
 # Testando a função com o dataset 'iris'
 library(datasets)
 iris <- datasets::iris
 
-seed <- 42
-
 results <- comp_alg(data = iris,
+                    target = "Species",
                     train_val = 0.8,
-                    seed = seed,
+                    seed = 42,
                     cv_folds = 5,
                     verbose = FALSE)
 
-results$order1
-results$order2
+results$best_model
+class(results$metrics)
+results$metrics
+
 
 #print(results)
 #results$acuracia

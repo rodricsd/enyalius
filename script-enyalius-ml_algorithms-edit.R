@@ -16,6 +16,11 @@
 #install.packages("plotly")
 #install.packages("tidymodels")
 #install.packages("multiROC")
+#install.packages("kernlab", dependencies=TRUE)
+#install.packages("klaR", dependencies=TRUE)
+#install.packages("RSNNS", dependencies=TRUE)
+#install.packages("rpart", dependencies=TRUE)
+#install.packages("randomForest", dependencies=TRUE)
 
 library(plotly)
 library(tidymodels)
@@ -33,12 +38,72 @@ library(caretEnsemble)
 library(kernlab)
 library(xgboost)
 library(fastDummies)
+library(randomForest)
+library(rpart)
+library(RSNNS)
+library(klaR)
+library(kernlab)
 
 ### Loading the data set
 
 # Setting working directory
-setwd("./nhd/IC/script-r-enyalius/") #change it according to your specific path
-getwd()
+setwd("./") #change it according to your specific path
+
+# Random Forest, SVM, KNN, MLP, RPART, Naive Bayes.
+default_mllist <- list("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")
+
+comp_alg <- function(data, list_alg, train_val, cv_folds, seed) {
+  #models.list <- caret::modelLookup()$model
+  #models.list
+  
+  # Definir seed para reprodutibilidade
+  set.seed(seed)
+  
+  # Dividir os dados em treino e teste
+  in_training <- createDataPartition(y = data[, ncol(data)],
+                                     p = train_val, 
+                                     list = F)
+  train_set <- data[in_training,]
+  test_set <- data[-in_training,]
+  
+  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
+  dependent_variable <- train_set[,ncol(train_set)]
+  dependent_test_set <- test_set[,ncol(test_set)]
+  
+  # Definir controle do treino (Validação Cruzada com n folds)
+  train_control <- trainControl(method = "cv", number = cv_folds)
+  
+  # Lista para armazenar os modelos treinados
+  model_results <- list()
+  
+  # Loop para treinar cada algoritmo
+  for (alg in list_alg) {
+    print(paste("Treinando o modelo com algoritmo:", alg))
+    
+    # Treinar o modelo com o algoritmo atual
+    model <- caret::train(x = final_train_set,
+                   y = dependent_variable, 
+                   method = alg, 
+                   trControl = train_control, 
+                   metric = "Accuracy")
+    
+    # Armazenar o modelo treinado na lista
+    model_results[[alg]] <- model
+  }
+  
+  # Avaliar o desempenho no conjunto de teste #### MUDAR
+  evaluation_results <- list()
+  for (alg in list_alg) {
+    print(paste("Avaliando o modelo com algoritmo:", alg))
+    predictions <- predict(model_results[[alg]], newdata = test_set)
+    confusion_matrix <- confusionMatrix(predictions, dependent_test_set)
+    evaluation_results[[alg]] <- confusion_matrix
+    print(confusion_matrix)
+  }
+  
+  # Retornar os resultados dos modelos e as avaliações
+  return(list(models = model_results, evaluations = evaluation_results))
+}
 
 # Importing our lizard data set
 data_enyalius <- read_xlsx("herp-74-04-335_s02-edit.xlsx",
@@ -144,94 +209,11 @@ ctrl <- trainControl(method = "repeatedcv", classProbs = TRUE, number = 5,
                      repeats = 5, summaryFunction = defaultSummary)
 
 ### Predicting
-
-# rpart (decision tress)
-set.seed(42) 
-rpart <- train(final_species_name ~.,
-               data = trainingSet_final,
-               method = "rpart",
-               metric = "Accuracy",
-               trControl = ctrl,
-               na.action = na.omit
-               )
-fitted_rpart <- predict(rpart, testSet_final)
-length(testSet_final$final_species_name)
-length(fitted_rpart)
-cf_rpart <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fitted_rpart,
-                mode = "everything")
-
-# nnet
-set.seed(42) 
-nnet <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "nnet",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittednnet <- predict(nnet, testSet_final)
-cf_nnet <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittednnet,
-                mode = "everything") 
-
-# SVM
-set.seed(42) 
-svm_linear <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "svmLinear",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittedsvm <- predict(svm_linear, testSet_final)
-cf_svm <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittedsvm,
-                mode = "everything")
-
-# Random forest
-set.seed(42) 
-rf <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "rf",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittedrf <- predict(rf, testSet_final)
-cf_rf <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittedrf,
-                mode = "everything")
-
-# Random forest
-set.seed(42) 
-rf <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "rf",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittedrf <- predict(rf, testSet_final)
-cf_rf <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittedrf,
-                mode = "everything")
-
-# Logit
-set.seed(42) 
-logit <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "LogitBoost",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittedlogit <- predict(rf, testSet_final)
-cf_logit <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittedlogit,
-                mode = "everything")
-
-# KNN
-set.seed(42) 
-knn_train <- train(final_species_name ~.,
-              data = trainingSet_final,
-              method = "knn",
-              metric = "Accuracy",
-              trControl = ctrl) 
-fittedknn <- predict(knn_train, testSet_final)
-cf_knn <- confusionMatrix(reference = testSet_final$final_species_name,
-                data = fittedknn,
-                mode = "everything") 
+results <- comp_alg(list(final_species_name, trainingSet_final), 
+                    default_mllist, 
+                    train_val = 0.75,
+                    cv_folds = 5,
+                    seed = 123)
 
 ### Comparing the performance of different ML algorithms
 resamps <- resamples(list(NNET = nnet,
