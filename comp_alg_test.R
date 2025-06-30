@@ -40,10 +40,6 @@ comp_alg <- function(data,
   train_set <- data[in_training,]
   test_set <- data[-in_training,]
   
-  #final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
-  #dependent_variable <- train_set[,ncol(train_set)]
-  #dependent_test_set <- test_set[,ncol(test_set)]
-  
   final_train_set <- dplyr::select(train_set, -all_of(target))  # preditores
   dependent_variable <- train_set[[target]]                     # resposta de treino
   dependent_test_set <- test_set[[target]]                     # resposta de teste
@@ -59,6 +55,8 @@ comp_alg <- function(data,
   accuracy_sd <- c()
   kappa <- c()
   kappa_sd <- c()
+  ratio <- c()
+  dratio <- c()
   
   # Loop para treinar cada algoritmo
   for (alg in list_alg) {
@@ -86,14 +84,22 @@ comp_alg <- function(data,
     accuracy_sd[alg] <- model$results$AccuracySD[best_index]
     kappa[alg] <- model$results$Kappa[best_index]
     kappa_sd[alg] <- model$results$KappaSD[best_index]
+    ratio[alg] <- (accuracy_sd[alg]/accuracy[alg])
+    dratio[alg] <- (accuracy_sd[alg]/accuracy[alg]) - accuracy_sd[alg]
   }
   
-  res_scores <- data.frame(accuracy = accuracy,
-                           accuracy_sd = accuracy_sd,
-                           kappa = kappa,
-                           kappa_sd = kappa_sd)
+  res_scores <- data.frame(
+    algorithm = names(accuracy),
+    accuracy = unname(accuracy),
+    accuracy_sd = unname(accuracy_sd),
+    kappa = unname(kappa),
+    kappa_sd = unname(kappa_sd),
+    ratio = unname(ratio),
+    dratio = unname(dratio)
+  )
   
-  res_scores_ordered <- res_scores[order(res_scores$accuracy, decreasing = TRUE), ]
+  #res_scores_ordered <- res_scores[order(res_scores$accuracy, decreasing = TRUE), ]
+  res_scores_ordered <- res_scores[order(res_scores$dratio, decreasing = FALSE), ]
   best_model <- res_scores_ordered$algorithm[1]
   
   # Retornar os resultados dos modelos e as avaliações
@@ -102,7 +108,7 @@ comp_alg <- function(data,
     models = model_results, 
     evaluations = evaluation_results,
     metrics = res_scores_ordered,
-    best_model = best_model
+    best_model = best_model,
     ))
 }
 
@@ -117,10 +123,9 @@ results <- comp_alg(data = iris,
                     cv_folds = 5,
                     verbose = FALSE)
 
-results$best_model
+results$best_model_0
 class(results$metrics)
 results$metrics
-
 
 #print(results)
 #results$acuracia
