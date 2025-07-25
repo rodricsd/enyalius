@@ -55,7 +55,6 @@ comp_alg <- function(data,
   accuracy_sd <- c()
   kappa <- c()
   kappa_sd <- c()
-  ratio <- c()
   dratio <- c()
   
   # Loop para treinar cada algoritmo
@@ -84,7 +83,6 @@ comp_alg <- function(data,
     accuracy_sd[alg] <- model$results$AccuracySD[best_index]
     kappa[alg] <- model$results$Kappa[best_index]
     kappa_sd[alg] <- model$results$KappaSD[best_index]
-    ratio[alg] <- (accuracy_sd[alg]/accuracy[alg])
     dratio[alg] <- (accuracy_sd[alg]/accuracy[alg]) - accuracy_sd[alg]
   }
   
@@ -94,7 +92,6 @@ comp_alg <- function(data,
     accuracy_sd = unname(accuracy_sd),
     kappa = unname(kappa),
     kappa_sd = unname(kappa_sd),
-    ratio = unname(ratio),
     dratio = unname(dratio)
   )
   
@@ -108,7 +105,7 @@ comp_alg <- function(data,
     models = model_results, 
     evaluations = evaluation_results,
     metrics = res_scores_ordered,
-    best_model = best_model,
+    best_model = best_model
     ))
 }
 
