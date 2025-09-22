@@ -1,0 +1,90 @@
+# Tutorial: Using the diagnoseR Package
+
+The `diagnoseR` package provides a convenient way to compare the performance of multiple machine learning algorithms on your dataset. This tutorial will guide you through installing the package from GitHub and using its main function, `comp_alg`.
+
+## Installation
+
+Since this package is not on CRAN, you'll need to install it directly from its GitHub repository. You can do this using the `devtools` package. If you don't have `devtools` installed, open your R console and run:
+
+```R
+install.packages("devtools")
+```
+
+Once `devtools` is installed, you can install `diagnoseR` from a GitHub repository. **Note:** The following command assumes the package is located at `github.com/user/diagnoseR`. You will need to replace `user/diagnoseR` with the actual repository path.
+
+```R
+devtools::install_github("user/diagnoseR")
+```
+
+After installation, load the package into your R session:
+
+```R
+library(diagnoseR)
+```
+
+## Usage
+
+The primary function in this package is `comp_alg`. Let's walk through how to use it.
+
+### Example
+
+For this example, we'll use the built-in `iris` dataset.
+
+```R
+# Load the iris dataset
+data(iris)
+
+# Run the comparison function
+# We want to predict the 'Species' column
+results <- comp_alg(data = iris, target = "Species")
+
+# Print the results
+print(results)
+```
+
+### Understanding the `comp_alg` function
+
+The `comp_alg` function has several parameters you can customize:
+
+*   `data`: The dataframe containing your data.
+*   `target`: A string with the name of the column you want to predict.
+*   `list_alg`: A character vector of the machine learning algorithms you want to compare. The default list is `c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")`. You can find a list of available algorithms in the `caret` package documentation.
+*   `train_val`: The proportion of the data to be used for training (default is 0.75).
+*   `cv_folds`: The number of folds for cross-validation (this parameter is not used in the current version of the function, which uses `number` and `repeats` instead).
+*   `seed`: A random seed for reproducibility (default is 123).
+*   `number`: The number of folds for repeated cross-validation (default is 5).
+*   `repeats`: The number of times to repeat the cross-validation (default is 10).
+*   `verbose`: If `TRUE` (the default), it prints the confusion matrix for each algorithm during execution.
+
+### Interpreting the Output
+
+The `comp_alg` function returns a list object of class `diagnoseR_result`. When you print this object, you'll see a summary of the results, including:
+
+*   **One Standard Error Rule Results:**
+    *   `Threshold`: The accuracy threshold calculated by the "one standard error" rule. This is the accuracy of the best model minus one standard error.
+    *   `Best Model`: The model that is the most stable (lowest standard deviation of accuracy) among the candidates that have an accuracy above the threshold. This is often a more robust choice than simply picking the model with the highest accuracy.
+
+*   **Performance Metrics:** A table with the following columns for each algorithm:
+    *   `algorithm`: The name of the algorithm.
+    *   `candidate`: `TRUE` if the model's accuracy is above the one standard error threshold.
+    *   `accuracy`: The average accuracy from cross-validation.
+    *   `accuracy_sd`: The standard deviation of the accuracy.
+    *   `kappa`: The average Kappa statistic from cross-validation.
+    *   `dratio`: A custom metric (`(accuracy_sd/accuracy) - accuracy_sd`).
+    *   `accuracy_se`: The standard error of the accuracy.
+
+The returned list object also contains the trained models and detailed evaluation results, which you can access for further analysis:
+
+```R
+# Access the trained models
+results$models
+
+# Access the detailed evaluation results (including confusion matrices)
+results$evaluations
+
+# Access the performance metrics as a data frame
+results$metrics
+
+# Get the name of the best model
+results$best_model
+```
