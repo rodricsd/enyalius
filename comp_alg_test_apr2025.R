@@ -20,7 +20,7 @@ library(RSNNS)
 library(klaR)
 library(kernlab)
 
-### Funï¿½ï¿½o
+### Função
 comp_alg <- function(data, 
                      list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") , 
                      train_val = 0.75, 
@@ -28,10 +28,7 @@ comp_alg <- function(data,
                      seed = 123, 
                      number = 5, 
                      repeats = 10) 
-{
-  #if (!length(list_alg)) {
-  #  list_alg <- c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") 
-  #}
+  {  
   # Definir seed para reprodutibilidade
   set.seed(seed)
   
@@ -42,11 +39,11 @@ comp_alg <- function(data,
   train_set <- data[in_training,]
   test_set <- data[-in_training,]
   
-  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variï¿½vel resposta estï¿½ na ï¿½ltima coluna
+  final_train_set <- train_set[,-ncol(train_set)] # Assume que a variável resposta está na última coluna
   dependent_variable <- train_set[,ncol(train_set)]
   dependent_test_set <- test_set[,ncol(test_set)]
   
-  # Definir controle do treino (Validaï¿½ï¿½o Cruzada com n folds)
+  # Definir controle do treino (Validação Cruzada com n folds)
   train_control <- trainControl(method = "repeatedcv", number = number, repeats = repeats) 
   
   # Lista para armazenar os modelos treinados
@@ -77,19 +74,22 @@ comp_alg <- function(data,
     print(confusion_matrix)
   }
   
-  # Retornar os resultados dos modelos e as avaliaï¿½ï¿½es
-  return(data.frame(models = model_results, evaluations = evaluation_results))
-}
+  # Retornar os resultados dos modelos e as avaliações
+  return(list(models = model_results, evaluations = evaluation_results))
+  }
 
-# Testando a funï¿½ï¿½o com o dataset 'iris'
+# Testando a função com o dataset 'iris'
 library(datasets)
 iris <- datasets::iris
 
+seed <- 42
+
 results <- comp_alg(data = iris,
-                    list_alg,
-                    train_val,
-                    seed,
+                    train_val = 0.8,
+                    seed = seed,
                     cv_folds = 5)
+
+df_results <- do.call(rbind.data.frame, results$models)
 
 print(results)
 
@@ -98,8 +98,14 @@ print(results)
 
 
 ### A fazer:
-#1 Especificar um valor default para o trainControl dentro da nossa funï¿½ï¿½o, 
-# mas dar a liberdade ao usuï¿½rio de colocar o seu prï¿½prio input
+## 1 Usar a função postResample para obter acurácia e kappa para cada um dos algoritmos
+# Armazenar estes resultados em uma lista separada
+# Transformar esta lista em data frame e colocar isso no return da função
+# Links uteis:
+# https://topepo.github.io/caret/measuring-performance.html#measures-for-class-probabilities
+# https://www.rdocumentation.org/packages/purrr/versions/0.2.5/topics/map
 
-#2 Mudar output da funï¿½ï¿½o. Encontrar uma forma em que a funï¿½ï¿½o retorne
-# a acurï¿½cia de cada modelo, rankeando do melhor para o pior
+## 2 No dataframe reportado como resultado, rankear os modelos, do melhor para o pior
+
+## 3 Encontrar um jeito de fazer a divisão entre treino e teste de forma que não seja
+# necessário assumir que a variável resposta está na última coluna
