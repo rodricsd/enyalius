@@ -1,0 +1,46 @@
+Training algorithm: rpart 
+Training algorithm: nnet 
+Training algorithm: svmLinear 
+Training algorithm: rf 
+Training algorithm: LogitBoost 
+Training algorithm: knn 
+
+
+--- Enyalius Dataset Analysis Results ---
+
+--- Resultados da Regra do Erro Padrão ---
+Threshold (Melhor Acuracia - Melhor SE): 0.869 
+Melhor modelo (mais estável dos candidatos): LogitBoost 
+
+Metricas de Performance:
+  algorithm candidate  accuracy accuracy_sd     kappa      dratio accuracy_se
+ LogitBoost      TRUE 0.8765920  0.05361675 0.8566879 0.007548251 0.007582553
+         rf     FALSE 0.8304191  0.05161970 0.8071767 0.010541322 0.007300127
+  svmLinear     FALSE 0.8119482  0.05812062 0.7869344 0.013461062 0.008219496
+        knn     FALSE 0.6610287  0.05781794 0.6137971 0.029648670 0.008176692
+       nnet     FALSE 0.5686948  0.08266096 0.5044971 0.062691092 0.011690025
+      rpart     FALSE 0.5450401  0.07456870 0.4761922 0.062244538 0.010545606
+-------------------------------------
+Training algorithm: rpart 
+Training algorithm: nnet 
+Training algorithm: svmLinear 
+Training algorithm: rf 
+Training algorithm: LogitBoost 
+Training algorithm: knn 
+
+
+--- Iris Dataset Analysis Results ---
+
+--- Resultados da Regra do Erro Padrão ---
+Threshold (Melhor Acuracia - Melhor SE): 0.9822 
+Melhor modelo (mais estável dos candidatos): svmLinear 
+
+Metricas de Performance:
+  algorithm candidate  accuracy accuracy_sd     kappa       dratio accuracy_se
+  svmLinear      TRUE 0.9857101  0.02491882 0.9785672 0.0003612509 0.003524053
+       nnet     FALSE 0.9787465  0.02775850 0.9680773 0.0006027771 0.003925644
+        knn     FALSE 0.9621730  0.03571461 0.9431875 0.0014040902 0.005050809
+         rf     FALSE 0.9447577  0.04190982 0.9170217 0.0024505714 0.005926944
+ LogitBoost     FALSE 0.9337497  0.05365649 0.9005564 0.0038069736 0.007588174
+      rpart     FALSE 0.9195605  0.05698953 0.8791230 0.0049852169 0.008059537
+-------------------------------------

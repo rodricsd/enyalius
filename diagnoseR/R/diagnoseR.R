@@ -1,28 +1,18 @@
-library(plotly)
-library(tidymodels)
-library(pROC)
-library(devtools)
-library(multiROC)
-library(mice)
-library(tidyverse)
-library(readxl)
-library(caret)
-library(e1071)
-library(glmnet)
-library(MLmetrics)
-library(caretEnsemble)
-library(kernlab)
-library(xgboost)
-library(fastDummies)
-library(randomForest)
-library(rpart)
-library(RSNNS)
-library(klaR)
-
 #' Compare Algoritmos de Amprendizado de Máquina.
 #'
 #' Esta função compara multiplos algoritmos de aprendizado de máquina.
+#' @param data The dataframe containing your data.
+#' @param target A string with the name of the column you want to predict.
+#' @param list_alg A character vector of the machine learning algorithms you want to compare.
+#' @param train_val The proportion of the data to be used for training.
+#' @param cv_folds The number of folds for cross-validation (currently not used, `number` is used instead).
+#' @param seed A random seed for reproducibility.
+#' @param number The number of folds for repeated cross-validation.
+#' @param repeats The number of times to repeat the cross-validation.
+#' @param verbose If `TRUE`, it prints the confusion matrix for each algorithm during execution.
+#' @return A list object of class `diagnoseR_result` containing models, evaluations, and performance metrics.
 #' @importFrom caret createDataPartition trainControl confusionMatrix
+#' @importFrom dplyr select all_of
 #' @export
 comp_alg <- function(data, 
                      target,
@@ -41,11 +31,11 @@ comp_alg <- function(data,
   in_training <- caret::createDataPartition(y = data[[target]],
                                      p = train_val, 
                                      list = FALSE)
-  train_set <- data[in_training,]
-  test_set <- data[-in_training,]
+  train_set <- data[in_training, ]
+  test_set <- data[-in_training, ]
   
   final_train_set <- dplyr::select(train_set, -all_of(target))  # preditores
-  dependent_variable <- train_set[[target]]                     # resposta de treino
+  dependent_variable <- train_set[[target]]                    # resposta de treino
   dependent_test_set <- test_set[[target]]                     # resposta de teste
   
   # Definir controle do treino (Validação Cruzada com n folds)
@@ -103,12 +93,9 @@ comp_alg <- function(data,
     kappa = unname(kappa),
     kappa_sd = unname(kappa_sd),
     dratio = unname(dratio)
-  )
+  ) 
   
-  #res_scores_ordered <- res_scores[order(res_scores$accuracy, decreasing = TRUE), ]
-  #res_scores_ordered <- res_scores[order(res_scores$dratio, decreasing = FALSE), ]
   #best_model <- res_scores_ordered$algorithm[1]
-
   # Implementar a regra oneSE para seleção de modelo
   res_scores$accuracy_se <- res_scores$accuracy_sd / sqrt(number * repeats)
   
@@ -124,13 +111,16 @@ comp_alg <- function(data,
   candidates <- res_scores[res_scores$candidate, ]
   final_choice <- candidates[which.min(candidates$accuracy_sd), ]
   best_model <- as.character(final_choice$algorithm)
+
+  res_scores_ordered <- res_scores[order(res_scores$accuracy, decreasing = TRUE), ]
+  #res_scores_ordered <- res_scores[order(res_scores$dratio, decreasing = FALSE), ]
   
   # Retornar os resultados dos modelos e as avaliações
   result_list <- list(
     model_names = list_alg, 
     models = model_results, 
     evaluations = evaluation_results,
-    metrics = res_scores,
+    metrics = res_scores_ordered,
     best_model = best_model,
     one_se_threshold = one_se_threshold
     )

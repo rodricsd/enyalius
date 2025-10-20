@@ -16,6 +16,28 @@ comp_alg(
   verbose = TRUE
 )
 }
+\arguments{
+\item{data}{The dataframe containing your data.}
+
+\item{target}{A string with the name of the column you want to predict.}
+
+\item{list_alg}{A character vector of the machine learning algorithms you want to compare.}
+
+\item{train_val}{The proportion of the data to be used for training.}
+
+\item{cv_folds}{The number of folds for cross-validation (currently not used, `number` is used instead).}
+
+\item{seed}{A random seed for reproducibility.}
+
+\item{number}{The number of folds for repeated cross-validation.}
+
+\item{repeats}{The number of times to repeat the cross-validation.}
+
+\item{verbose}{If `TRUE`, it prints the confusion matrix for each algorithm during execution.}
+}
+\value{
+A list object of class `diagnoseR_result` containing models, evaluations, and performance metrics.
+}
 \description{
 Esta função compara multiplos algoritmos de aprendizado de máquina.
 }
