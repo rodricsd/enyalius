@@ -1,7 +1,5 @@
 ### --- Example Workflow using the diagnoseR Package with Enyalius Data ---
-
-# Load the diagnoseR package.
-# Ensure it's installed, e.g., by running devtools::install() in the package directory.
+library(ggplot2)
 library(datasets)
 library(diagnoseR)
 
@@ -39,6 +37,19 @@ enyalius_results <- comp_alg(
 cat("\n\n--- Enyalius Dataset Analysis Results ---\n")
 print(enyalius_results)
 
+# --- 4. Get and Plot Variable Importance ---
+
+# First, calculate the importance scores for all models
+enyalius_var_imp <- get_var_importance(enyalius_results)
+
+# Print the importance for the best model
+cat("\n\n--- Variable Importance for Best Model (LogitBoost) ---\n")
+print(enyalius_var_imp$LogitBoost)
+
+# Now, create a plot for the best model
+# You will need to have ggplot2 installed: install.packages("ggplot2")
+
+save_all_var_plots(enyalius_var_imp, dataset_name = "enyalius", top_n = 15)
 
 ### --- Example Workflow using the diagnoseR Package with Iris Data ---
 
@@ -56,3 +67,14 @@ iris_results <- comp_alg(data = iris,
 # --- 3. Print the final summary table ---
 cat("\n\n--- Iris Dataset Analysis Results ---\n")
 print(iris_results)
+
+iris_var_imp <- get_var_importance(iris_results)
+
+# Print the importance for the best model
+cat("\n\n--- Variable Importance for Best Model (svmLinear) ---\n")
+print(iris_var_imp$svmLinear)
+
+# Now, create a plot for the best model
+# You will need to have ggplot2 installed: install.packages("ggplot2")
+
+save_all_var_plots(iris_var_imp, dataset_name = "iris", top_n = 15)
