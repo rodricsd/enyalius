@@ -2,27 +2,48 @@
 
 The `diagnoseR` package provides a streamlined workflow to preprocess data, compare the performance of multiple machine learning algorithms, and select the best model based on robust statistical methods.
 
+[!R-CMD-check](https://github.com/rodricsd/enyalius/actions/workflows/r.yml)
+[!Codecov test coverage](https://app.codecov.io/gh/rodricsd/enyalius?branch=main)
+
 ## Installation
-
-This package can be installed directly from its GitHub repository using the `devtools` package. If you don't have `devtools` installed, open your R console and run:
-
-```R
-install.packages("devtools")
-```
-
-Once `devtools` is installed, you can install `diagnoseR` from a GitHub repository. **Note:** The following command assumes the package is located at `https://github.com/rodricsd/enyalius/diagnoseR`. You will need to replace `user/diagnoseR` with the actual repository path.
-
-```R
-devtools::install_github("rodricsd/enyalius/diagnoseR")
-```
-
-After installation, load the package into your R session:
-
-```R
-library(diagnoseR)
-```
-
-## Usage
+ 
+ You can install the `diagnoseR` package from GitHub using the `devtools` package.
+ 
+ ```R
+ # First, install devtools if you don't have it
+ if (!require("devtools")) {
+   install.packages("devtools")
+ }
+ 
+ # Install the diagnoseR package from the 'diagnoseR' subdirectory of the GitHub repo
+ devtools::install_github("rodricsd/enyalius/diagnoseR")
+ 
+ # Load the package
+ library(diagnoseR)
+ ```
+ 
+ ### Local Installation (for Developers)
+ 
+ If you have cloned the repository to your local machine, you can install the package directly from the source files. Make sure your R session's working directory is inside the package folder (`enyalius/diagnoseR`).
+ 
+ ```R
+ # Build and install the package locally
+ devtools::install()
+ 
+ # Load the package
+ library(diagnoseR)
+ ```
+ 
+ ## Documentation
+ 
+ The package is documented using `roxygen2`. If you are contributing to the package and make changes to the function documentation (the `#'` comments), you must regenerate the documentation files.
+ 
+ ```R
+ # From within the package directory ('enyalius/diagnoseR')
+ devtools::document()
+ ```
+ 
+ ## A Complete Workflow Example
 
 The primary function in this package is `comp_alg`. Let's walk through how to use it.
 
