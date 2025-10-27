@@ -9,7 +9,6 @@ comp_alg(
   target,
   list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn"),
   train_val = 0.75,
-  cv_folds = 5,
   seed = 123,
   number = 5,
   repeats = 10,
@@ -24,8 +23,6 @@ comp_alg(
 \item{list_alg}{A character vector of the machine learning algorithms you want to compare.}
 
 \item{train_val}{The proportion of the data to be used for training.}
-
-\item{cv_folds}{The number of folds for cross-validation (currently not used, `number` is used instead).}
 
 \item{seed}{A random seed for reproducibility.}
 

@@ -1,3 +1,86 @@
+#' Preprocess a Dataset for Analysis
+#'
+#' This function provides a generic workflow for reading and preparing a dataset.
+#' It handles file reading, filtering, column selection, and imputation of missing values.
+#'
+#' @param file_path Path to the data file (supports `.xlsx` or `.csv`).
+#' @param text_cols A character vector of column names that should be treated as text/factors.
+#' @param na_strings A character vector of strings to interpret as `NA` (missing) values.
+#' @param sheet For Excel files, the name or index of the sheet to read.
+#' @param filter_col Optional. The name of a column to filter by.
+#' @param filter_values Optional. A vector of values to remove from the `filter_col`.
+#' @param keep_cols Optional. A character vector of column names to keep. If `NULL`, all columns are kept.
+#' @param seed A random seed for reproducibility of the missing data imputation.
+#' @return A preprocessed data frame.
+#' @importFrom tools file_ext
+#' @importFrom readxl read_excel
+#' @importFrom vroom vroom
+#' @importFrom mice mice complete
+#' @importFrom dplyr mutate_at vars all_of select filter
+#' @importFrom magrittr %>%
+#' @examples
+#' # Create a temporary csv file for the example
+#' temp_iris_path <- tempfile(fileext = ".csv")
+#' write.csv(iris, temp_iris_path, row.names = FALSE)
+#'
+#' # Run the preprocessing function
+#' processed_data <- preprocess_data(
+#'   file_path = temp_iris_path,
+#'   text_cols = "Species"
+#' )
+#'
+#' # Clean up the temporary file
+#' file.remove(temp_iris_path)
+#'
+#' @export
+preprocess_data <- function(file_path,
+                            text_cols,
+                            na_strings = c("NA", "N/A", ""),
+                            sheet = 1,
+                            filter_col = NULL,
+                            filter_values = NULL,
+                            keep_cols = NULL,
+                            seed = 42) {
+
+  # Read data based on file extension
+  ext <- tools::file_ext(file_path)
+  if (ext == "xlsx") {
+    df <- readxl::read_excel(file_path, sheet = sheet, na = na_strings)
+  } else if (ext == "csv") {
+    df <- vroom::vroom(file_path, delim = ",", na = na_strings, show_col_types = FALSE)
+  } else {
+    stop("Unsupported file type. Please use .xlsx or .csv.")
+  }
+
+  # Filter rows
+  if (!is.null(filter_col) && !is.null(filter_values)) {
+    if (!filter_col %in% names(df)) {
+      stop(paste("filter_col '", filter_col, "' not found in the data.", sep = ""))
+    }
+    df <- df %>% dplyr::filter(!.data[[filter_col]] %in% filter_values)
+  }
+
+  # Select columns to keep
+  if (!is.null(keep_cols)) {
+    if (!all(keep_cols %in% names(df))) {
+      stop("One or more columns in 'keep_cols' not found in the data.")
+    }
+    df <- df %>% dplyr::select(dplyr::all_of(keep_cols))
+  }
+
+  # Convert specified text columns to factors
+  df <- df %>% dplyr::mutate_at(dplyr::vars(dplyr::all_of(text_cols)), as.factor)
+
+  # Impute missing data using mice
+  if (any(sapply(df, function(x) sum(is.na(x))) > 0)) {
+    set.seed(seed)
+    mice_imputed <- mice::mice(df, m = 1, method = 'pmm', printFlag = FALSE)
+    df <- mice::complete(mice_imputed, 1)
+  }
+
+  return(df)
+}
+
 #' Compare Algoritmos de Amprendizado de Máquina.
 #'
 #' Esta função compara multiplos algoritmos de aprendizado de máquina.
@@ -5,20 +88,18 @@
 #' @param target A string with the name of the column you want to predict.
 #' @param list_alg A character vector of the machine learning algorithms you want to compare.
 #' @param train_val The proportion of the data to be used for training.
-#' @param cv_folds The number of folds for cross-validation (currently not used, `number` is used instead).
 #' @param seed A random seed for reproducibility.
 #' @param number The number of folds for repeated cross-validation.
 #' @param repeats The number of times to repeat the cross-validation.
 #' @param verbose If `TRUE`, it prints the confusion matrix for each algorithm during execution.
 #' @return A list object of class `diagnoseR_result` containing models, evaluations, and performance metrics.
 #' @importFrom caret createDataPartition trainControl confusionMatrix
-#' @importFrom dplyr select all_of
+#' @importFrom dplyr select all_of arrange desc
 #' @export
 comp_alg <- function(data, 
                      target,
                      list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") , 
-                     train_val = 0.75, 
-                     cv_folds = 5, 
+                     train_val = 0.75,
                      seed = 123, 
                      number = 5, 
                      repeats = 10,
@@ -53,7 +134,9 @@ comp_alg <- function(data,
   
   # Loop para treinar cada algoritmo
   for (alg in list_alg) {
-    cat("Training algorithm:", alg, "\n")
+    if (verbose) {
+      cat("Training algorithm:", alg, "\n")
+    }
     
     # Treinar o modelo com o algoritmo atual
     train_args <- list(x = final_train_set,
@@ -113,7 +196,6 @@ comp_alg <- function(data,
   best_model <- as.character(final_choice$algorithm)
 
   res_scores_ordered <- res_scores[order(res_scores$accuracy, decreasing = TRUE), ]
-  #res_scores_ordered <- res_scores[order(res_scores$dratio, decreasing = FALSE), ]
   
   # Retornar os resultados dos modelos e as avaliações
   result_list <- list(
@@ -145,23 +227,142 @@ print.diagnoseR_result <- function(x, ...) {
   cat("-------------------------------------\n")
 }
 
-#print(results)
-#results$acuracia
-#Acuracia RF: 0.97
+#' Get Variable Importance from Trained Models
+#'
+#' This function extracts and summarizes variable importance from the models
+#' trained by `comp_alg`.
+#'
+#' @param diagnoseR_result A list object of class `diagnoseR_result` from `comp_alg`.
+#' @return A list where each element is a data frame of variable importances for an algorithm,
+#' sorted from most to least important.
+#' @importFrom caret varImp
+#' @export
+get_var_importance <- function(diagnoseR_result) {
+  if (!inherits(diagnoseR_result, "diagnoseR_result")) {
+    stop("Input must be an object of class 'diagnoseR_result' from the comp_alg function.")
+  }
 
-### A fazer:
-## 1 Combinar as duas funções em uma só, colocando o for loop da acurácia dentro da função anterior
+  var_importance_list <- list()
 
-## 2 Dar uma opção de quiet mode OU verbose, para visualizar ou não o andamento da função no console
-# argumento na função para reportar na tela ou não
+  for (alg in names(diagnoseR_result$models)) {
+    model <- diagnoseR_result$models[[alg]]
 
-## 3 Encontrar um jeito de fazer a divisão entre treino e teste de forma que não seja
-# necessário assumir que a variável resposta esteja na última coluna
+    # Use tryCatch in case varImp is not available for a model
+    imp <- tryCatch({
+      caret::varImp(model, scale = TRUE)
+    }, error = function(e) {
+      warning(paste("Could not calculate variable importance for", alg, ":", e$message))
+      return(NULL)
+    })
 
-## OBS: NÃO É MAIS NECESSÁRIO
-# Usar a função postResample para obter acurácia e kappa para cada um dos algoritmos
-# Armazenar estes resultados em uma lista separada
-# Transformar esta lista em data frame e colocar isso no return da função
-# Links uteis:
-# https://topepo.github.io/caret/measuring-performance.html#measures-for-class-probabilities
-# https://www.rdocumentation.org/packages/purrr/versions/0.2.5/topics/map
+    if (!is.null(imp)) {
+      # Coerce to a standard data.frame to ensure subsetting with `drop=FALSE` works
+      imp_df <- as.data.frame(imp$importance)
+      # Add variable names as a column
+      imp_df$Variable <- rownames(imp_df)
+      rownames(imp_df) <- NULL
+
+      # Check if an 'Overall' column exists for sorting.
+      # If not (e.g., in multi-class cases), calculate row-wise max importance.
+      if ("Overall" %in% names(imp_df)) {
+        sort_col <- "Overall"
+      } else {
+        # Create a temporary 'Overall' column with the max importance across classes
+        numeric_cols <- sapply(imp_df, is.numeric)
+        if (sum(numeric_cols) > 0) {
+          imp_df$Overall <- apply(imp_df[, numeric_cols, drop = FALSE], 1, max)
+          sort_col <- "Overall"
+        } else {
+          # If no numeric columns found, we can't sort. Warn and skip.
+          warning(paste("Could not determine numeric importance columns for model:", alg))
+          next # Skip to the next iteration of the loop
+        }
+      }
+      imp_df <- imp_df[order(imp_df[[sort_col]], decreasing = TRUE), ]
+      var_importance_list[[alg]] <- imp_df
+    }
+  }
+
+  return(var_importance_list)
+}
+
+#' Plot Variable Importance
+#'
+#' Creates a bar plot of variable importance for a specified model.
+#'
+#' @param importance_list The list of variable importances from `get_var_importance()`.
+#' @param model_name The name of the model to plot (e.g., "rf", "LogitBoost").
+#' @param top_n The number of top variables to display in the plot.
+#' @return A `ggplot` object showing the variable importance plot.
+#' @importFrom ggplot2 ggplot aes geom_bar coord_flip labs theme_minimal theme element_text
+#' @importFrom utils head 
+#' @export
+plot_var_importance <- function(importance_list, model_name, top_n = 15) {
+  if (!model_name %in% names(importance_list)) {
+    stop(paste("Model '", model_name, "' not found. Available models are: ",
+         paste(names(importance_list), collapse = ", ")))
+  }
+
+  imp_df <- importance_list[[model_name]]
+  imp_df_top <- head(imp_df, top_n)
+
+  # The importance column is the first one
+  importance_col <- names(imp_df_top)[1]
+
+  ggplot(imp_df_top, aes(x = reorder(Variable, .data[[importance_col]]), y = .data[[importance_col]])) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    coord_flip() +
+    labs(title = paste("Top", top_n, "Variable Importance for", model_name), x = "Variables", y = "Importance") +
+    theme_minimal()
+}
+
+#' Save All Variable Importance Plots
+#'
+#' Generates and saves variable importance plots for all models to a specified directory.
+#'
+#' @param importance_list The list of variable importances from `get_var_importance()`.
+#' @param dataset_name Optional. A string to be included in the output filename (e.g., "iris").
+#' @param output_dir The directory where the plot files will be saved. If it doesn't exist, it will be created.
+#' @param top_n The number of top variables to display in each plot.
+#' @param width The width of the saved plot in inches.
+#' @param height The height of the saved plot in inches.
+#' @param dpi The resolution for the saved plot.
+#' @return Invisibly returns a character vector of the saved file paths.
+#' @importFrom ggplot2 ggsave
+#' @export
+save_all_var_plots <- function(importance_list,
+                               dataset_name = NULL,
+                               output_dir = "variable_importance_plots",
+                               top_n = 15,
+                               width = 8,
+                               height = 6,
+                               dpi = 300) {
+  if (!dir.exists(output_dir)) {
+    message(paste("Creating directory:", output_dir))
+    dir.create(output_dir, recursive = TRUE)
+  }
+
+  saved_files <- c()
+
+  for (model_name in names(importance_list)) {
+    p <- plot_var_importance(importance_list, model_name = model_name, top_n = top_n)
+
+    if (!is.null(dataset_name) && nzchar(trimws(dataset_name))) {
+      file_name <- paste0("var_imp_", dataset_name, "_", model_name, ".png")
+    } else {
+      file_name <- paste0("var_imp_", model_name, ".png")
+    }
+    file_path <- file.path(output_dir, file_name)
+
+    ggplot2::ggsave(
+      filename = file_path,
+      plot = p,
+      width = width,
+      height = height,
+      dpi = dpi
+    )
+    message(paste("Saved plot for", model_name, "to", file_path))
+    saved_files <- c(saved_files, file_path)
+  }
+  invisible(saved_files)
+}
