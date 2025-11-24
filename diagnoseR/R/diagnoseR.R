@@ -81,21 +81,33 @@ preprocess_data <- function(file_path,
   return(df)
 }
 
-#' Compare Algoritmos de Amprendizado de Máquina.
+#' Compare Machine Learning Algorithms
 #'
-#' Esta função compara multiplos algoritmos de aprendizado de máquina.
+#' This function compares multiple machine learning algorithms using repeated
+#' cross-validation on a training subset of the data. It identifies the best, most
+#' stable model using the "one-standard-error" rule and then retrains that single
+#' best model on the full dataset to produce a final, production-ready model.
+#'
 #' @param data The dataframe containing your data.
 #' @param target A string with the name of the column you want to predict.
 #' @param list_alg A character vector of the machine learning algorithms you want to compare.
 #' @param train_val The proportion of the data to be used for training.
 #' @param seed A random seed for reproducibility.
-#' @param number The number of folds for repeated cross-validation.
-#' @param repeats The number of times to repeat the cross-validation.
-#' @param verbose If `TRUE`, it prints the confusion matrix for each algorithm during execution.
+#' @param number The number of folds for cross-validation.
+#' @param repeats The number of times to repeat the cross-validation process.
+#' @param verbose If `TRUE`, prints progress and confusion matrices during execution.
 #' @return A list object of class `diagnoseR_result` containing models, evaluations, and performance metrics.
 #' @importFrom caret createDataPartition trainControl confusionMatrix
 #' @importFrom dplyr select all_of arrange desc
 #' @export
+#' @examples
+#' # Run algorithm comparison on the iris dataset
+#' iris_results <- comp_alg(
+#'   data = iris,
+#'   target = "Species",
+#'   verbose = FALSE # Keep output clean for example
+#' )
+#' print(iris_results)
 comp_alg <- function(data, 
                      target,
                      list_alg = c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn") , 
@@ -107,23 +119,28 @@ comp_alg <- function(data,
 {  
   # Definir seed para reprodutibilidade
   set.seed(seed)
-  
+
   # Dividir os dados em treino e teste
   in_training <- caret::createDataPartition(y = data[[target]],
                                      p = train_val, 
                                      list = FALSE)
   train_set <- data[in_training, ]
   test_set <- data[-in_training, ]
-  
+  train_set_full <- data # The full dataset for the final model
+
   final_train_set <- dplyr::select(train_set, -all_of(target))  # preditores
-  dependent_variable <- train_set[[target]]                    # resposta de treino
+  dependent_variable <- train_set[[target]]                    # resposta de treino (split)
   dependent_test_set <- test_set[[target]]                     # resposta de teste
-  
+
+  final_train_set_full <- dplyr::select(train_set_full, -all_of(target))
+  dependent_variable <- train_set_full[[target]]
+
   # Definir controle do treino (Validação Cruzada com n folds)
   train_control <- caret::trainControl(method = "repeatedcv", number = number, repeats = repeats) 
   
   # Lista para armazenar os modelos treinados
   model_results <- list()
+  model_results_full <- list()
   evaluation_results <- list()
   
   accuracy <- c()
@@ -131,42 +148,67 @@ comp_alg <- function(data,
   kappa <- c()
   kappa_sd <- c()
   dratio <- c()
+
+  accuracy_full <- c()
+  accuracy_sd_full <- c()
+  kappa_full <- c()
+  kappa_sd_full <- c()
   
   # Loop para treinar cada algoritmo
   for (alg in list_alg) {
     if (verbose) {
-      cat("Training algorithm:", alg, "\n")
+      cat("Training algorithm on split data:", alg, "\n")
     }
     
     # Treinar o modelo com o algoritmo atual
-    train_args <- list(x = final_train_set,
+    train_args_split <- list(x = final_train_set,
                          y = dependent_variable, 
                          method = alg, 
                          trControl = train_control, 
                          metric = "Accuracy")
-    
+
+    if (verbose) {
+      cat("Training algorithm on full data:", alg, "\n")
+    }
+
+    train_args_full <- list(x = final_train_set_full,
+                           y = train_set_full[[target]],
+                           method = alg,
+                           trControl = train_control,
+                           metric = "Accuracy")
+
     if (alg == "nnet") {
-      train_args$trace <- FALSE
+      train_args_split$trace <- FALSE
+      train_args_full$trace <- FALSE
     }
     
-    model <- do.call(caret::train, train_args)
+    model <- do.call(caret::train, train_args_split)
+    model_full <- do.call(caret::train, train_args_full)
     
     # Armazenar o modelo treinado na lista
-    model_results[[alg]] <- model
+    model_results[[alg]] <- model # Based on split data
+    model_results_full[[alg]] <- model_full # Based on full data
   
     # Previsoes no teste
     predictions <- predict(model, dplyr::select(test_set, -all_of(target)))
     confusion_matrix <- caret::confusionMatrix(predictions, dependent_test_set)
     evaluation_results[[alg]] <- confusion_matrix
     if (verbose) print(confusion_matrix)
-  
+
     # Obter o modelo treinado com maior acuracia
     best_index <- which.max(model$results$Accuracy)
     accuracy[alg] <- model$results$Accuracy[best_index]
     accuracy_sd[alg] <- model$results$AccuracySD[best_index]
     kappa[alg] <- model$results$Kappa[best_index]
     kappa_sd[alg] <- model$results$KappaSD[best_index]
-    dratio[alg] <- (accuracy_sd[alg]/accuracy[alg]) - accuracy_sd[alg]
+    dratio[alg] <- (accuracy_sd[alg]/accuracy[alg]) - accuracy_sd[alg] 
+
+    # Get metrics from full data training
+    best_index_full <- which.max(model_full$results$Accuracy)
+    accuracy_full[alg] <- model_full$results$Accuracy[best_index_full]
+    accuracy_sd_full[alg] <- model_full$results$AccuracySD[best_index_full]
+    kappa_full[alg] <- model_full$results$Kappa[best_index_full]
+    kappa_sd_full[alg] <- model_full$results$KappaSD[best_index_full]
   }
   
   res_scores <- data.frame(
@@ -177,8 +219,17 @@ comp_alg <- function(data,
     kappa_sd = unname(kappa_sd),
     dratio = unname(dratio)
   ) 
+
+  res_scores_full <- data.frame(
+    algorithm = names(accuracy_full),
+    accuracy = unname(accuracy_full),
+    accuracy_sd = unname(accuracy_sd_full),
+    kappa = unname(kappa_full),
+    kappa_sd = unname(kappa_sd_full)
+  )
+
+  res_scores_full_ordered <- res_scores_full[order(res_scores_full$accuracy, decreasing = TRUE), ]
   
-  #best_model <- res_scores_ordered$algorithm[1]
   # Implementar a regra oneSE para seleção de modelo
   res_scores$accuracy_se <- res_scores$accuracy_sd / sqrt(number * repeats)
   
@@ -200,9 +251,11 @@ comp_alg <- function(data,
   # Retornar os resultados dos modelos e as avaliações
   result_list <- list(
     model_names = list_alg, 
-    models = model_results, 
+    models = model_results, # Models from train/test split
+    models_full = model_results_full, # Models from full dataset
     evaluations = evaluation_results,
     metrics = res_scores_ordered,
+    metrics_full = res_scores_full_ordered,
     best_model = best_model,
     one_se_threshold = one_se_threshold
     )
@@ -217,14 +270,73 @@ print.diagnoseR_result <- function(x, ...) {
   cat("\n--- Resultados da Regra do Erro Padrão ---\n")
   cat("Threshold (Melhor Acuracia - Melhor SE):", format(x$one_se_threshold, digits = 4), "\n")
   cat("Melhor modelo (mais estável dos candidatos):", x$best_model, "\n\n")
-  cat("Metricas de Performance:\n")
+  cat("Metricas de Performance (CV no conjunto de treino):\n")
   
   # Reordenar colunas para clareza e formatar digitos
   metrics_to_print <- x$metrics[, c("algorithm", "candidate", "accuracy", "accuracy_sd", "kappa", "dratio", "accuracy_se")]
   
   print(metrics_to_print, row.names = FALSE)
   
+  cat("\n--- Métricas do Treino com Dados Completos (Cross-Validation) ---\n")
+  cat("Performance estimada no re-treino com 100% dos dados:\n")
+  
+  metrics_full_to_print <- x$metrics_full[, c("algorithm", "accuracy", "accuracy_sd", "kappa", "kappa_sd")]
+  print(metrics_full_to_print, row.names = FALSE)
+  
   cat("-------------------------------------\n")
+}
+
+#' Predict Outcomes Using the Best Model
+#'
+#' This function takes a `diagnoseR_result` object and new data, and returns
+#' predictions using the best model identified by `comp_alg`. The best model
+#' is chosen based on the one-standard-error rule and has been re-trained on the
+#' full dataset for final use.
+#' @param diagnoseR_result A list object of class `diagnoseR_result` from `comp_alg`.
+#' @param newdata A data frame containing new observations for prediction. The columns
+#'   must match the predictor variables used to train the original models.
+#' @return A data frame containing the new data with an added column (`predicted_class`) for the predictions.
+#' @export
+#' @examples
+#' # First, run comp_alg on the iris dataset
+#' iris_results <- comp_alg(data = iris, target = "Species", verbose = FALSE, seed = 123)
+#'
+#' # Create some new data to predict on (must have same predictor columns)
+#' new_iris_data <- data.frame(
+#'   Sepal.Length = c(5.1, 7.0),
+#'   Sepal.Width = c(3.5, 3.2),
+#'   Petal.Length = c(1.4, 4.7),
+#'   Petal.Width = c(0.2, 1.4)
+#' )
+#'
+#' # Get predictions
+#' predictions <- predict_best_model(iris_results, new_iris_data)
+#' print(predictions)
+#'
+predict_best_model <- function(diagnoseR_result, newdata) {
+  if (!inherits(diagnoseR_result, "diagnoseR_result")) {
+    stop("Input must be an object of class 'diagnoseR_result' from the comp_alg function.")
+  }
+
+  best_model_name <- diagnoseR_result$best_model
+  final_model <- diagnoseR_result$models_full[[best_model_name]]
+
+  # --- Validation Step ---
+  # Get the predictor variable names the model was trained on
+  required_cols <- final_model$coefnames
+
+  # Check if all required columns are present in the new data
+  missing_cols <- setdiff(required_cols, names(newdata))
+
+  if (length(missing_cols) > 0) {
+    stop(paste0("The following required columns are missing from 'newdata': ",
+                paste(missing_cols, collapse = ", ")))
+  }
+
+  predictions <- predict(final_model, newdata = newdata)
+
+  results_df <- cbind(newdata, predicted_class = predictions)
+  return(results_df)
 }
 
 #' Get Variable Importance from Trained Models
@@ -233,19 +345,46 @@ print.diagnoseR_result <- function(x, ...) {
 #' trained by `comp_alg`.
 #'
 #' @param diagnoseR_result A list object of class `diagnoseR_result` from `comp_alg`.
+#' @param model_source A string indicating which models to use. Can be `"split"` (default)
+#'   to get importance from all models trained on the split data, or `"full"` to get
+#'   importance from the single best model trained on the full dataset.
 #' @return A list where each element is a data frame of variable importances for an algorithm,
 #' sorted from most to least important.
 #' @importFrom caret varImp
 #' @export
-get_var_importance <- function(diagnoseR_result) {
+#' @examples
+#' # First, run comp_alg to get a results object
+#' iris_results <- comp_alg(data = iris, target = "Species", verbose = FALSE, seed = 123)
+#'
+#' # Get importance from all models trained on the split data (default)
+#' var_imp_split <- get_var_importance(iris_results, model_source = "split")
+#' # Print importance for the 'rf' model
+#' print(var_imp_split$rf)
+#'
+#' # Get importance from the single best model trained on the full data
+#' var_imp_full <- get_var_importance(iris_results, model_source = "full")
+#' # The list will only contain one element, for the best model
+#' print(var_imp_full)
+#'
+get_var_importance <- function(diagnoseR_result, model_source = "split") {
   if (!inherits(diagnoseR_result, "diagnoseR_result")) {
     stop("Input must be an object of class 'diagnoseR_result' from the comp_alg function.")
+  }
+  
+  if (!model_source %in% c("split", "full")) {
+    stop("`model_source` must be either 'split' or 'full'.")
   }
 
   var_importance_list <- list()
 
-  for (alg in names(diagnoseR_result$models)) {
-    model <- diagnoseR_result$models[[alg]]
+  if (model_source == "split") {
+    model_list <- diagnoseR_result$models
+  } else { # model_source == "full"
+    model_list <- diagnoseR_result$models_full
+  }
+
+  for (alg in names(model_list)) {
+    model <- model_list[[alg]]
 
     # Use tryCatch in case varImp is not available for a model
     imp <- tryCatch({
@@ -256,9 +395,7 @@ get_var_importance <- function(diagnoseR_result) {
     })
 
     if (!is.null(imp)) {
-      # Coerce to a standard data.frame to ensure subsetting with `drop=FALSE` works
       imp_df <- as.data.frame(imp$importance)
-      # Add variable names as a column
       imp_df$Variable <- rownames(imp_df)
       rownames(imp_df) <- NULL
 
@@ -273,9 +410,8 @@ get_var_importance <- function(diagnoseR_result) {
           imp_df$Overall <- apply(imp_df[, numeric_cols, drop = FALSE], 1, max)
           sort_col <- "Overall"
         } else {
-          # If no numeric columns found, we can't sort. Warn and skip.
           warning(paste("Could not determine numeric importance columns for model:", alg))
-          next # Skip to the next iteration of the loop
+          next 
         }
       }
       imp_df <- imp_df[order(imp_df[[sort_col]], decreasing = TRUE), ]
@@ -296,6 +432,21 @@ get_var_importance <- function(diagnoseR_result) {
 #' @return A `ggplot` object showing the variable importance plot.
 #' @importFrom ggplot2 ggplot aes geom_bar coord_flip labs theme_minimal theme element_text
 #' @importFrom utils head 
+#' @examples
+#' # First, run comp_alg to get a results object
+#' iris_results <- comp_alg(data = iris, target = "Species", verbose = FALSE, seed = 123)
+#'
+#' # Get importance from the single best model trained on the full data
+#' var_imp_full <- get_var_importance(iris_results, model_source = "full")
+#'
+#' # The name of the best model is stored in the results object
+#' best_model_name <- iris_results$best_model
+#'
+#' # Plot the variable importance for the best model
+#' if (length(var_imp_full) > 0) {
+#'   plot_var_importance(var_imp_full, model_name = best_model_name)
+#' }
+#'
 #' @export
 plot_var_importance <- function(importance_list, model_name, top_n = 15) {
   if (!model_name %in% names(importance_list)) {
@@ -306,10 +457,12 @@ plot_var_importance <- function(importance_list, model_name, top_n = 15) {
   imp_df <- importance_list[[model_name]]
   imp_df_top <- head(imp_df, top_n)
 
-  # The importance column is the first one
-  importance_col <- names(imp_df_top)[1]
+  # Explicitly use the 'Overall' column for plotting, which was created for sorting.
+  if (!"Overall" %in% names(imp_df_top)) {
+    stop("Could not find the 'Overall' importance column to plot.")
+  }
 
-  ggplot(imp_df_top, aes(x = reorder(Variable, .data[[importance_col]]), y = .data[[importance_col]])) +
+  ggplot(imp_df_top, aes(x = reorder(Variable, .data[["Overall"]]), y = .data[["Overall"]])) +
     geom_bar(stat = "identity", fill = "steelblue") +
     coord_flip() +
     labs(title = paste("Top", top_n, "Variable Importance for", model_name), x = "Variables", y = "Importance") +
