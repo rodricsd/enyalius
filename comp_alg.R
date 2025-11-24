@@ -46,9 +46,6 @@ enyalius_var_imp <- get_var_importance(enyalius_results)
 cat("\n\n--- Variable Importance for Best Model (LogitBoost) ---\n")
 print(enyalius_var_imp$LogitBoost)
 
-# Now, create a plot for the best model
-# You will need to have ggplot2 installed: install.packages("ggplot2")
-
 save_all_var_plots(enyalius_var_imp, dataset_name = "enyalius", top_n = 15)
 
 ### --- Example Workflow using the diagnoseR Package with Iris Data ---
@@ -57,8 +54,6 @@ save_all_var_plots(enyalius_var_imp, dataset_name = "enyalius", top_n = 15)
 data(iris)
 
 # --- 2. Run the algorithm comparison ---
-# Since the iris dataset is clean and doesn't require preprocessing like
-# file reading or imputation, we can pass it directly to comp_alg.
 iris_results <- comp_alg(data = iris,
                          target = "Species", # The column we want to predict
                          seed = 123,
@@ -73,8 +68,5 @@ iris_var_imp <- get_var_importance(iris_results)
 # Print the importance for the best model
 cat("\n\n--- Variable Importance for Best Model (svmLinear) ---\n")
 print(iris_var_imp$svmLinear)
-
-# Now, create a plot for the best model
-# You will need to have ggplot2 installed: install.packages("ggplot2")
 
 save_all_var_plots(iris_var_imp, dataset_name = "iris", top_n = 15)
