@@ -10,7 +10,8 @@ Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports:
     caret,
-    dplyr
+    dplyr,
+    NeuralNetTools
 Suggests:
     plotly,
     tidymodels,

@@ -4,35 +4,29 @@
 \alias{get_var_importance}
 \title{Get Variable Importance from Trained Models}
 \usage{
-get_var_importance(diagnoseR_result, model_source = "split")
+get_var_importance(diagnoseR_result)
 }
 \arguments{
-\item{diagnoseR_result}{A list object of class `diagnoseR_result` from `comp_alg`.}
-
-\item{model_source}{A string indicating which models to use. Can be `"split"` (default)
-to get importance from all models trained on the split data, or `"full"` to get
-importance from the single best model trained on the full dataset.}
+\item{diagnoseR_result}{A list object of class `diagnoseR_result` from `comp_alg()`.}
 }
 \value{
 A list where each element is a data frame of variable importances for an algorithm,
-sorted from most to least important.
+sorted from most to least important based on the best model's ranking.
 }
 \description{
-This function extracts and summarizes variable importance from the models
-trained by `comp_alg`.
+This function extracts variable importance from the models trained by `comp_alg`.
+It standardizes the output by ordering all variables according to their
+importance in the best model (identified by `comp_alg`). This ensures that
+all variables are present in the output for every model, facilitating direct comparisons.
 }
 \examples{
 # First, run comp_alg to get a results object
 iris_results <- comp_alg(data = iris, target = "Species", verbose = FALSE, seed = 123)
 
-# Get importance from all models trained on the split data (default)
-var_imp_split <- get_var_importance(iris_results, model_source = "split")
+# Get importance from all models
+var_imp_list <- get_var_importance(iris_results)
 # Print importance for the 'rf' model
-print(var_imp_split$rf)
-
-# Get importance from the single best model trained on the full data
-var_imp_full <- get_var_importance(iris_results, model_source = "full")
-# The list will only contain one element, for the best model
-print(var_imp_full)
+# Note the variables are ordered based on the best model's (svmLinear) importance
+print(var_imp_list$rf)
 
 }

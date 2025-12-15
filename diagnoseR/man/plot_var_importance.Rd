@@ -17,21 +17,18 @@ plot_var_importance(importance_list, model_name, top_n = 15)
 A `ggplot` object showing the variable importance plot.
 }
 \description{
-Creates a bar plot of variable importance for a specified model.
+Creates a bar plot of variable importance for a specified model. The variables
+are ordered based on their importance in the best model (as determined by
+`get_var_importance`), ensuring consistent ordering across all plots.
 }
 \examples{
 # First, run comp_alg to get a results object
 iris_results <- comp_alg(data = iris, target = "Species", verbose = FALSE, seed = 123)
 
-# Get importance from the single best model trained on the full data
-var_imp_full <- get_var_importance(iris_results, model_source = "full")
+# Get importance from all models
+var_imp_list <- get_var_importance(iris_results)
 
-# The name of the best model is stored in the results object
-best_model_name <- iris_results$best_model
-
-# Plot the variable importance for the best model
-if (length(var_imp_full) > 0) {
-  plot_var_importance(var_imp_full, model_name = best_model_name)
-}
+# Plot the variable importance for the 'rf' model
+plot_var_importance(var_imp_list, model_name = "rf")
 
 }

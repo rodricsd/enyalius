@@ -18,7 +18,7 @@ comp_alg(
 \arguments{
 \item{data}{The dataframe containing your data.}
 
-\item{target}{A string with the name of the column you want to predict.}
+\item{target}{A string with the name of the column to predict.}
 
 \item{list_alg}{A character vector of the machine learning algorithms you want to compare.}
 
@@ -40,6 +40,8 @@ This function compares multiple machine learning algorithms using repeated
 cross-validation on a training subset of the data. It identifies the best, most
 stable model using the "one-standard-error" rule and then retrains that single
 best model on the full dataset to produce a final, production-ready model.
+If `train_val` is set to 1.0, the function skips the train/test split and
+performs model comparison using repeated cross-validation on the entire dataset.
 }
 \examples{
 # Run algorithm comparison on the iris dataset

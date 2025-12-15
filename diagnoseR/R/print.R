@@ -10,11 +10,5 @@ print.diagnoseR_result <- function(x, ...) {
   
   print(metrics_to_print, row.names = FALSE)
   
-  cat("\n--- Métricas do Treino com Dados Completos (Cross-Validation) ---\n")
-  cat("Performance estimada no re-treino com 100% dos dados:\n")
-  
-  metrics_full_to_print <- x$metrics_full[, c("algorithm", "accuracy", "accuracy_sd", "kappa", "kappa_sd")]
-  print(metrics_full_to_print, row.names = FALSE)
-  
   cat("-------------------------------------\n")
 }
