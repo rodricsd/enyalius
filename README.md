@@ -1,9 +1,21 @@
-# Tutorial: Using the diagnoseR Package
+# diagnoseR: A Robust Framework for ML Model Comparison in R
 
-The `diagnoseR` package provides a streamlined workflow to preprocess data, compare the performance of multiple machine learning algorithms, and select the best model based on robust statistical methods.
+# Tutorial: Using the diagnoseR Package
 
 [!R-CMD-check](https://github.com/rodricsd/enyalius/actions/workflows/r.yml)
 [!Codecov test coverage](https://app.codecov.io/gh/rodricsd/enyalius?branch=main)
+
+The `diagnoseR` package offers a streamlined and robust framework for comparing machine learning models in R. It automates the process of training, evaluating, and selecting the best classification model from a list of candidates, using repeated cross-validation and the statistically sound "one-standard-error" rule for model selection.
+
+
+## Key Features
+
+*   **Automated Comparison**: Compare multiple `caret`-compatible algorithms with a single function call.
+*   **Robust Model Selection**: Uses the "one-standard-error" rule to select a model that is not only accurate but also stable, avoiding overfitting.
+*   **Flexible Evaluation**: Easily switch between a train/test split and a full-dataset cross-validation by changing a single parameter (`train_val`).
+*   **Resilient Workflow**: A single failing algorithm won't stop the entire analysis. The function will issue a warning and continue with the remaining models.
+*   **Consistent Reporting**: Variable importance plots are standardized and ordered based on the best model, making direct visual comparisons easy and intuitive.
+*   **Production-Ready**: Automatically retrains the best model on 100% of the data, providing a final, optimized model ready for prediction.
 
 ## Installation
  
@@ -59,8 +71,15 @@ data(iris)
 # We want to predict the 'Species' column
 results <- comp_alg(data = iris, target = "Species")
 
-# Print the results
+# Print the summary results
 print(results)
+
+# Get the standardized variable importance for all models
+var_imp <- get_var_importance(results)
+
+# Print the importance for the 'rf' model
+# Note the variables are ordered based on the best model
+print(var_imp$rf)
 ```
 ## A Complete Workflow Example
 
@@ -101,6 +120,21 @@ enyalius_results <- comp_alg(
 
 # --- 3. Print the final summary table ---
 print(enyalius_results)
+
+# --- 4. Get and print variable importance ---
+enyalius_var_imp <- get_var_importance(enyalius_results)
+
+# Print the importance for the best model
+best_model_name <- enyalius_results$best_model
+print(enyalius_var_imp[[best_model_name]])
+
+# --- 5. Plot and save variable importance plots ---
+
+# Plot the importance for the best model
+plot_var_importance(enyalius_var_imp, model_name = best_model_name)
+
+# Save all plots to a single PDF for easy comparison
+save_all_var_plots(enyalius_var_imp, dataset_name = "enyalius_comparison")
 ```
 
 ## Function Reference
@@ -134,10 +168,12 @@ The `comp_alg` function has several parameters you can customize:
 *   `target`: A string with the name of the column you want to predict.
 *   `list_alg`: A character vector of the machine learning algorithms you want to compare. The default list is `c("rpart", "nnet", "svmLinear", "rf", "LogitBoost", "knn")`. You can find a list of available algorithms in the `caret` package documentation.
 *   `train_val`: The proportion of the data to be used for training (default is 0.75).
-*   `cv_folds`: The number of folds for cross-validation (this parameter is not used in the current version of the function, which uses `number` and `repeats` instead).
+    *   Set to `1.0` to skip the train/test split and use the entire dataset for model comparison via cross-validation.
+    *   **Note:** To prevent errors during cross-validation, the function will automatically lower `train_val` if it's too high for the given dataset size and number of CV folds, issuing a warning. The final model is always trained on 100% of the data regardless.
 *   `seed`: A random seed for reproducibility (default is 123).
 *   `number`: The number of folds for repeated cross-validation (default is 5).
 *   `repeats`: The number of times to repeat the cross-validation (default is 10).
+*   `cv_folds`: (Obsoleto) Este parâmetro não é mais utilizado. Use `number` para o número de folds e `repeats` para o número de repetições.
 *   `verbose`: If `TRUE` (the default), it prints the confusion matrix for each algorithm during execution.
 
 ### Interpreting the Output
@@ -157,13 +193,13 @@ The `comp_alg` function returns a list object of class `diagnoseR_result`. When 
     *   `dratio`: A custom metric (`(accuracy_sd/accuracy) - accuracy_sd`).
     *   `accuracy_se`: The standard error of the accuracy.
 
-The returned list object also contains the trained models and detailed evaluation results, which you can access for further analysis:
+The returned list object also contains the trained models and other useful information, which you can access for further analysis:
 
 ```R
-# Access the trained models
+# Access the list of models trained on the split data (used for comparison)
 results$models
 
-# Access the detailed evaluation results (including confusion matrices)
+# Access the detailed evaluation results (confusion matrices from the test set)
 results$evaluations
 
 # Access the performance metrics as a data frame
@@ -171,4 +207,20 @@ results$metrics
 
 # Get the name of the best model
 results$best_model
+
+# Access the final, production-ready model (the best model retrained on 100% of the data)
+results$final_model
+```
+### `get_var_importance()`
+
+Esta função extrai e padroniza a importância das variáveis de todos os modelos treinados pelo `comp_alg`. Uma característica principal é que ela ordena todas as variáveis de acordo com sua importância no **melhor modelo**, garantindo que todos os gráficos e tabelas tenham um layout consistente e comparável.
+
+**Uso:**
+
+```R
+var_imp_list <- get_var_importance(results)
+
+# Imprime a importância para o modelo 'rf' (as variáveis são ordenadas pelo ranking do melhor modelo)
+print(var_imp_list$rf)
+```
 ```
