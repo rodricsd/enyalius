@@ -10,6 +10,8 @@
 #' @param sheet For Excel files, the name or index of the sheet to read.
 #' @param filter_col Optional. The name of a column to filter by.
 #' @param filter_values Optional. A vector of values to remove from `filter_col`.
+#' @param include_col Optional. The name of a column to filter by inclusion (keep only these values).
+#' @param include_values Optional. A vector of values to keep in `include_col`.
 #' @param keep_cols Optional. A character vector of column names to keep. If `NULL`, all columns are kept.
 #' @param seed A random seed for reproducibility of the imputation.
 #' @return A preprocessed dataframe with missing values imputed.
@@ -43,7 +45,9 @@
 #' # )
 #' }
 preprocess_data <- function(file_path, text_cols = NULL, na_strings = c("NA", "N/A", ""), sheet = 1,
-                            filter_col = NULL, filter_values = NULL, keep_cols = NULL, seed = 42) {
+                            filter_col = NULL, filter_values = NULL, 
+                            include_col = NULL, include_values = NULL,
+                            keep_cols = NULL, seed = 42) {
   # --- 1. Read Data ---
   ext <- tools::file_ext(file_path)
   if (ext == "xlsx") {
@@ -56,9 +60,30 @@ preprocess_data <- function(file_path, text_cols = NULL, na_strings = c("NA", "N
 
   # --- 2. Filter rows and select columns (optional) ---
   data_edit <- raw_data
+
+  # Trim whitespace from character columns to avoid matching errors (e.g. "M " vs "M")
+  for (col in names(data_edit)) {
+    if (is.character(data_edit[[col]])) {
+      data_edit[[col]] <- trimws(data_edit[[col]])
+    }
+  }
+
   if (!is.null(filter_col) && !is.null(filter_values)) {
     data_edit <- data_edit %>%
       dplyr::filter(!.data[[filter_col]] %in% filter_values)
+  }
+  if (!is.null(include_col) && !is.null(include_values)) {
+    # Capture available values for debugging
+    available_vals <- if (include_col %in% names(data_edit)) unique(data_edit[[include_col]]) else NULL
+
+    data_edit <- data_edit %>%
+      dplyr::filter(.data[[include_col]] %in% include_values)
+
+    if (nrow(data_edit) == 0) {
+      stop(paste0("Filtering by '", include_col, "' resulted in 0 rows. Target: '", 
+                  paste(include_values, collapse = "', '"), "'. Available: '", 
+                  paste(head(available_vals, 20), collapse = "', '"), "'."))
+    }
   }
   if (!is.null(keep_cols)) {
     data_edit <- data_edit %>%
@@ -74,6 +99,26 @@ preprocess_data <- function(file_path, text_cols = NULL, na_strings = c("NA", "N
     }
   }
   data_edit <- droplevels(data_edit)
+
+  # --- 3.5. Remove constant or all-NA columns ---
+  # Identify and remove columns that are all NA or have zero variance (constant)
+  # This prevents errors in MICE and downstream modeling.
+  cols_to_remove <- sapply(data_edit, function(x) {
+    clean_x <- x[!is.na(x)]
+    if (length(clean_x) == 0) return(TRUE) # All NA
+    if (length(unique(clean_x)) <= 1) return(TRUE) # Constant
+    return(FALSE)
+  })
+
+  if (any(cols_to_remove)) {
+    removed_names <- names(data_edit)[cols_to_remove]
+    warning(paste("Removing constant or all-NA columns:", paste(removed_names, collapse = ", ")))
+    data_edit <- data_edit[, !cols_to_remove, drop = FALSE]
+  }
+
+  if (ncol(data_edit) == 0) {
+    stop("All columns were removed (constant or all-NA). Cannot proceed with imputation.")
+  }
 
   # --- 4. Impute Missing Data using MICE ---
   imp <- mice::mice(data_edit, m = 5, maxit = 5, method = 'pmm', print = FALSE, seed = seed)

@@ -1,0 +1,168 @@
+
+
+--- Enyalius Dataset Analysis Results (MALES ONLY) ---
+
+--- Resultados da Regra do Erro Padrão ---
+Threshold (Melhor Acuracia - Melhor SE): 0.8883 
+Melhor modelo (mais estável dos candidatos): rf 
+
+Metricas de Performance (CV no conjunto de treino):
+  algorithm candidate  accuracy accuracy_sd     kappa      dratio accuracy_se
+         rf      TRUE 0.9006171  0.08731089 0.8610726 0.009634735  0.01234762
+ LogitBoost     FALSE 0.8593856  0.08781727 0.8041937 0.014368836  0.01241924
+        knn     FALSE 0.8348168  0.09040696 0.7659429 0.017888607  0.01278548
+      rpart     FALSE 0.6399752  0.07364541 0.5044266 0.041429994  0.01041503
+  svmLinear     FALSE 0.5981826  0.38848657 0.5423682 0.260958221  0.05494030
+       nnet     FALSE 0.5544678  0.35524533 0.4852341 0.285450773  0.05023928
+-------------------------------------
+
+
+--- Enyalius Dataset Analysis Results (ALL DATA) ---
+
+--- Resultados da Regra do Erro Padrão ---
+Threshold (Melhor Acuracia - Melhor SE): 0.869 
+Melhor modelo (mais estável dos candidatos): LogitBoost 
+
+Metricas de Performance (CV no conjunto de treino):
+  algorithm candidate  accuracy accuracy_sd     kappa      dratio accuracy_se
+ LogitBoost      TRUE 0.8765920  0.05361675 0.8566879 0.007548251 0.007582553
+         rf     FALSE 0.8304191  0.05161970 0.8071767 0.010541322 0.007300127
+  svmLinear     FALSE 0.8119482  0.05812062 0.7869344 0.013461062 0.008219496
+        knn     FALSE 0.6610287  0.05781794 0.6137971 0.029648670 0.008176692
+       nnet     FALSE 0.5686948  0.08266096 0.5044971 0.062691092 0.011690025
+      rpart     FALSE 0.5450401  0.07456870 0.4761922 0.062244538 0.010545606
+-------------------------------------
+
+
+--- Variable Importance for Best Model (Males Only:  rf ) ---
+   Variable     Overall
+1      nVnS 100.0000000
+2       nMS  33.3526967
+3      nPVS  31.5190586
+4      nSpC  21.1657793
+5      nSbO  16.3475664
+6      nVrS  15.5144730
+7      nArT  12.3710843
+8        TL   9.3789609
+9     nbCoA   7.7748882
+10     n4TL   7.7248109
+11     nCRo   6.2851399
+12     ncPM   5.9916968
+13      TL4   4.4295048
+14   nbNSpL   3.9410279
+15      nPM   3.1382724
+16      FL4   2.3628658
+17      DHS   1.5210275
+18     ncIp   1.4800365
+19     EGFS   0.7257079
+20     NPRC   0.6417463
+21       GF   0.0000000
+
+
+--- Variable Importance for 'rf' model (Males Only) ---
+   Variable     Overall
+1      nVnS 100.0000000
+2       nMS  33.3526967
+3      nPVS  31.5190586
+4      nSpC  21.1657793
+5      nSbO  16.3475664
+6      nVrS  15.5144730
+7      nArT  12.3710843
+8        TL   9.3789609
+9     nbCoA   7.7748882
+10     n4TL   7.7248109
+11     nCRo   6.2851399
+12     ncPM   5.9916968
+13      TL4   4.4295048
+14   nbNSpL   3.9410279
+15      nPM   3.1382724
+16      FL4   2.3628658
+17      DHS   1.5210275
+18     ncIp   1.4800365
+19     EGFS   0.7257079
+20     NPRC   0.6417463
+21       GF   0.0000000
+
+
+--- Variable Importance for 'rf' model (All Data) ---
+   Variable    Overall
+1      NPRC   5.805763
+2       TL4   7.737387
+3      nPVS  55.347783
+4       nMS  53.607058
+5      nVrS  80.781756
+6      nVnS 100.000000
+7      ncPM  17.992747
+8      nSbO  72.519352
+9      nArT  50.618903
+10     n4TL  16.799588
+11     nSpC  43.693430
+12   nbNSpL  13.592112
+13       TL  22.663607
+14      nPM   5.368452
+15      FL4   1.570463
+16    nbCoA   5.974298
+17     ncIp   7.557955
+18     nCRo  12.713424
+19     EGFS   1.104897
+20       GF   0.000000
+21      DHS   2.791314
+
+
+--- Iris Dataset Analysis Results ---
+
+--- Resultados da Regra do Erro Padrão ---
+Threshold (Melhor Acuracia - Melhor SE): 0.9822 
+Melhor modelo (mais estável dos candidatos): svmLinear 
+
+Metricas de Performance (CV no conjunto de treino):
+  algorithm candidate  accuracy accuracy_sd     kappa       dratio accuracy_se
+  svmLinear      TRUE 0.9857101  0.02491882 0.9785672 0.0003612509 0.003524053
+       nnet     FALSE 0.9787465  0.02775850 0.9680773 0.0006027771 0.003925644
+        knn     FALSE 0.9621730  0.03571461 0.9431875 0.0014040902 0.005050809
+         rf     FALSE 0.9447577  0.04190982 0.9170217 0.0024505714 0.005926944
+ LogitBoost     FALSE 0.9337497  0.05365649 0.9005564 0.0038069736 0.007588174
+      rpart     FALSE 0.9195605  0.05698953 0.8791230 0.0049852169 0.008059537
+-------------------------------------
+
+
+--- Variable Importance for Best Model ( svmLinear ) ---
+      Variable   Overall
+1 Petal.Length 100.00000
+2  Petal.Width 100.00000
+3 Sepal.Length  88.91051
+4  Sepal.Width  50.00000
+
+
+--- Iris Dataset Analysis with train_val = 1.0 (Full Dataset CV) ---
+# weights:  11
+initial  value 178.178074 
+iter  10 value 120.004371
+iter  20 value 21.134068
+iter  30 value 6.083368
+iter  40 value 6.002201
+iter  50 value 5.986910
+iter  60 value 5.975422
+iter  70 value 5.973548
+iter  80 value 5.972558
+iter  90 value 5.972086
+iter 100 value 5.970144
+final  value 5.970144 
+stopped after 100 iterations
+
+--- Resultados da Regra do Erro Padrão ---
+Threshold (Melhor Acuracia - Melhor SE): 0.9692 
+Melhor modelo (mais estável dos candidatos): nnet 
+
+Metricas de Performance (CV no conjunto de treino):
+  algorithm candidate  accuracy accuracy_sd     kappa       dratio accuracy_se
+       nnet      TRUE 0.9728192  0.02578436 0.9592313 0.0007204212 0.003646459
+        knn      TRUE 0.9694877  0.03074155 0.9542295 0.0009675172 0.004347512
+  svmLinear     FALSE 0.9626864  0.02980194 0.9439937 0.0011551204 0.004214631
+         rf     FALSE 0.9551346  0.03589682 0.9326642 0.0016861742 0.005076577
+ LogitBoost     FALSE 0.9471461  0.03789516 0.9206533 0.0021146753 0.005359185
+      rpart     FALSE 0.9388144  0.03439176 0.9081659 0.0022414215 0.004863730
+-------------------------------------
+
+
+--- Test script finished successfully. ---

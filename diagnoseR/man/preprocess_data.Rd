@@ -11,6 +11,8 @@ preprocess_data(
   sheet = 1,
   filter_col = NULL,
   filter_values = NULL,
+  include_col = NULL,
+  include_values = NULL,
   keep_cols = NULL,
   seed = 42
 )
@@ -27,6 +29,10 @@ preprocess_data(
 \item{filter_col}{Optional. The name of a column to filter by.}
 
 \item{filter_values}{Optional. A vector of values to remove from `filter_col`.}
+
+\item{include_col}{Optional. The name of a column to filter by inclusion (keep only these values).}
+
+\item{include_values}{Optional. A vector of values to keep in `include_col`.}
 
 \item{keep_cols}{Optional. A character vector of column names to keep. If `NULL`, all columns are kept.}
 

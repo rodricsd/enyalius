@@ -4,22 +4,33 @@
 \alias{plot_var_importance}
 \title{Plot Variable Importance}
 \usage{
-plot_var_importance(importance_list, model_name, top_n = 15)
+plot_var_importance(
+  importance_list,
+  model_name = NULL,
+  top_n = 15,
+  type = "single",
+  color_palette = NULL
+)
 }
 \arguments{
 \item{importance_list}{The list of variable importances from `get_var_importance()`.}
 
-\item{model_name}{The name of the model to plot (e.g., "rf", "LogitBoost").}
+\item{model_name}{The name of the model(s) to plot. Can be a single string, a character vector, or NULL (to plot all available models).}
 
 \item{top_n}{The number of top variables to display in the plot.}
+
+\item{type}{The type of plot to generate: "single" (default), "grid", or "grouped".}
+
+\item{color_palette}{Optional. A vector of colors to use for the grouped plot.}
 }
 \value{
 A `ggplot` object showing the variable importance plot.
 }
 \description{
-Creates a bar plot of variable importance for a specified model. The variables
-are ordered based on their importance in the best model (as determined by
-`get_var_importance`), ensuring consistent ordering across all plots.
+Creates a bar plot of variable importance. Can plot a single model, or compare
+multiple models using a grid or grouped bars. The variables are ordered based
+on their importance in the best model (as determined by `get_var_importance`),
+ensuring consistent ordering across all plots.
 }
 \examples{
 # First, run comp_alg to get a results object
@@ -30,5 +41,14 @@ var_imp_list <- get_var_importance(iris_results)
 
 # Plot the variable importance for the 'rf' model
 plot_var_importance(var_imp_list, model_name = "rf")
+
+# Plot all models in a grid (by passing NULL to model_name)
+plot_var_importance(var_imp_list, type = "grid")
+
+# Plot all models with grouped bars
+plot_var_importance(var_imp_list, type = "grouped")
+
+# Plot grouped bars with custom colors
+plot_var_importance(var_imp_list, type = "grouped", color_palette = c("red", "blue", "green"))
 
 }

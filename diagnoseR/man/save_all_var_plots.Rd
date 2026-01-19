@@ -2,16 +2,19 @@
 % Please edit documentation in R/save_all_var_plots.R
 \name{save_all_var_plots}
 \alias{save_all_var_plots}
-\title{Save All Variable Importance Plots}
+\title{Save Variable Importance Plots}
 \usage{
 save_all_var_plots(
   importance_list,
   dataset_name = NULL,
   output_dir = "variable_importance_plots",
+  type = "individual",
+  color_palette = NULL,
   top_n = 15,
   width = 8,
   height = 6,
-  dpi = 300
+  dpi = 300,
+  format = "png"
 )
 }
 \arguments{
@@ -21,6 +24,10 @@ save_all_var_plots(
 
 \item{output_dir}{The directory where the plot files will be saved. If it doesn't exist, it will be created.}
 
+\item{type}{The type of plot to save: "individual" (default, one file per model), "grid", or "grouped".}
+
+\item{color_palette}{Optional. A vector of colors to use for the grouped plot.}
+
 \item{top_n}{The number of top variables to display in each plot.}
 
 \item{width}{The width of the saved plot in inches.}
@@ -28,10 +35,13 @@ save_all_var_plots(
 \item{height}{The height of the saved plot in inches.}
 
 \item{dpi}{The resolution for the saved plot.}
+
+\item{format}{The file format to save the plots (e.g., "png", "pdf", "svg"). Default is "png".}
 }
 \value{
 Invisibly returns a character vector of the saved file paths.
 }
 \description{
-Generates and saves variable importance plots for all models to a specified directory.
+Saves variable importance plots. Can save individual plots for each model,
+or a single combined plot (grid or grouped).
 }
