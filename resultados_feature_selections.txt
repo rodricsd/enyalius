@@ -70,6 +70,7 @@ Forward Step 18: Training with 18 variables...
 Forward Step 19: Training with 19 variables...
 Forward Step 20: Training with 20 variables...
 Forward Step 21: Training with 21 variables...
+
    n_vars best_model  accuracy accuracy_sd added_var
 1       1 LogitBoost 0.5085927  0.04480502      NPRC
 2       2 LogitBoost 0.5384007  0.13833003        GF
@@ -119,28 +120,29 @@ Backward Step 20: Training with 2 variables...
 note: only 1 unique complexity parameters in default grid. Truncating the grid to 1 .
 
 Backward Step 21: Training with 1 variables...
-   n_vars best_model  accuracy accuracy_sd
-1      21 LogitBoost 0.8765920  0.05361675
-2      20 LogitBoost 0.8432157  0.06037222
-3      19 LogitBoost 0.8477297  0.06143565
-4      18 LogitBoost 0.8281857  0.06213313
-5      17 LogitBoost 0.8369353  0.06489681
-6      16         rf 0.7861618  0.05697659
-7      15 LogitBoost 0.7923229  0.05364881
-8      14         rf 0.7856659  0.05243783
-9      13         rf 0.7805257  0.06506365
-10     12         rf 0.7742472  0.06419869
-11     11 LogitBoost 0.7875562  0.06038132
-12     10 LogitBoost 0.7890981  0.05348309
-13      9 LogitBoost 0.7447282  0.07402236
-14      8 LogitBoost 0.6988481  0.07960654
-15      7 LogitBoost 0.6409832  0.08653690
-16      6 LogitBoost 0.5954826  0.09112996
-17      5 LogitBoost 0.5935029  0.07819158
-18      4 LogitBoost 0.5041380  0.11638723
-19      3 LogitBoost 0.5032386  0.11410290
-20      2 LogitBoost 0.5384007  0.13833003
-21      1 LogitBoost 0.5085927  0.04480502
+
+   n_vars best_model  accuracy accuracy_sd removed_var
+1      21 LogitBoost 0.8765920  0.05361675        nArT
+2      20 LogitBoost 0.8432157  0.06037222        n4TL
+3      19 LogitBoost 0.8477297  0.06143565          TL
+4      18 LogitBoost 0.8281857  0.06213313        nSpC
+5      17 LogitBoost 0.8369353  0.06489681        nSbO
+6      16         rf 0.7861618  0.05697659       nbCoA
+7      15 LogitBoost 0.7923229  0.05364881        ncIp
+8      14         rf 0.7856659  0.05243783      nbNSpL
+9      13         rf 0.7805257  0.06506365        nCRo
+10     12         rf 0.7742472  0.06419869        ncPM
+11     11 LogitBoost 0.7875562  0.06038132         nPM
+12     10 LogitBoost 0.7890981  0.05348309        nVnS
+13      9 LogitBoost 0.7447282  0.07402236        nVrS
+14      8 LogitBoost 0.6988481  0.07960654         nMS
+15      7 LogitBoost 0.6409832  0.08653690        nPVS
+16      6 LogitBoost 0.5954826  0.09112996         FL4
+17      5 LogitBoost 0.5935029  0.07819158         TL4
+18      4 LogitBoost 0.5041380  0.11638723         DHS
+19      3 LogitBoost 0.5032386  0.11410290        EGFS
+20      2 LogitBoost 0.5384007  0.13833003          GF
+21      1 LogitBoost 0.5085927  0.04480502        NPRC
 
 --- C. Recursive Feature Elimination (RFE) ---
 RFE: Training with 21 variables...
@@ -169,7 +171,28 @@ note: only 1 unique complexity parameters in default grid. Truncating the grid t
 
 RFE: Training with 1 variables...
 
---- D. Entropy-based Selection (MRMR with praznik) ---
+   n_vars best_model  accuracy accuracy_sd removed_var
+1      21 LogitBoost 0.8765920  0.05361675         DHS
+2      20 LogitBoost 0.8792843  0.04906470          GF
+3      19 LogitBoost 0.8571060  0.05546622        EGFS
+4      18 LogitBoost 0.8616102  0.06515646        nCRo
+5      17 LogitBoost 0.8664442  0.06184729        ncIp
+6      16 LogitBoost 0.8665525  0.05137397       nbCoA
+7      15 LogitBoost 0.8757195  0.05808133         FL4
+8      14 LogitBoost 0.8591355  0.06996097         nPM
+9      13 LogitBoost 0.8720465  0.05831892          TL
+10     12 LogitBoost 0.8439438  0.06266715      nbNSpL
+11     11 LogitBoost 0.8446410  0.05755544        nSpC
+12     10 LogitBoost 0.8310626  0.05939741        n4TL
+13      9 LogitBoost 0.8643206  0.05658262        nArT
+14      8 LogitBoost 0.8091376  0.05911417        nSbO
+15      7 LogitBoost 0.7668144  0.06710072        ncPM
+16      6         rf 0.7587541  0.05735701         TL4
+17      5 LogitBoost 0.7625166  0.06218431        nVnS
+18      4 LogitBoost 0.7157259  0.06205415        nVrS
+19      3 LogitBoost 0.6047057  0.07394668         nMS
+20      2 LogitBoost 0.5780341  0.10175246        nPVS
+21      1 LogitBoost 0.5085927  0.04480502        NPRC
 
 --- D. Entropy-based Selection (MRMR with praznik) ---
 Predictors ordered by MRMR:
@@ -201,25 +224,48 @@ MRMR Step 18: Training with 18 variables...
 MRMR Step 19: Training with 19 variables...
 MRMR Step 20: Training with 20 variables...
 MRMR Step 21: Training with 21 variables...
+
    n_vars best_model  accuracy accuracy_sd added_var
 1       1 LogitBoost 0.6535291  0.08106000      nSbO
-2       2 LogitBoost 0.6721047  0.07632425      nVnS
-3       3 LogitBoost 0.7225158  0.06684375       nMS
-4       4 LogitBoost 0.7888160  0.07220441      nVrS
-5       5 LogitBoost 0.8471939  0.05786772      nArT
-6       6 LogitBoost 0.8702815  0.05055185      nPVS
-7       7 LogitBoost 0.8562178  0.05905617      nSpC
-8       8 LogitBoost 0.8594461  0.05121596      ncPM
-9       9 LogitBoost 0.8433413  0.06949431    nbNSpL
-10     10 LogitBoost 0.8481160  0.05756382      nCRo
-11     11 LogitBoost 0.8443509  0.06358486      n4TL
-12     12 LogitBoost 0.8552914  0.04765259      NPRC
-13     13 LogitBoost 0.8623943  0.05767574       TL4
-14     14 LogitBoost 0.8568784  0.05528347       nPM
-15     15 LogitBoost 0.8632420  0.05133124        TL
-16     16 LogitBoost 0.8692681  0.04987372     nbCoA
-17     17 LogitBoost 0.8657085  0.05688885      ncIp
-18     18 LogitBoost 0.8637475  0.05484886       FL4
-19     19 LogitBoost 0.8652002  0.06771222       DHS
-20     20 LogitBoost 0.8713015  0.06078863      EGFS
-21     21 LogitBoost 0.8550012  0.05099399        GF
+2       2 LogitBoost 0.6444469  0.07529317      nVnS
+3       3 LogitBoost 0.7206609  0.06326164       nMS
+4       4 LogitBoost 0.7899116  0.07366317      nVrS
+5       5 LogitBoost 0.8511591  0.07359921      nArT
+6       6 LogitBoost 0.8624421  0.06071825      nPVS
+7       7 LogitBoost 0.8661894  0.05648681      nSpC
+8       8 LogitBoost 0.8501582  0.05326476      ncPM
+9       9 LogitBoost 0.8616994  0.05599119    nbNSpL
+10     10 LogitBoost 0.8496647  0.05713434      nCRo
+11     11 LogitBoost 0.8460757  0.05728257      n4TL
+12     12 LogitBoost 0.8586661  0.05871878      NPRC
+13     13 LogitBoost 0.8529546  0.06022327       TL4
+14     14 LogitBoost 0.8617777  0.06428243       nPM
+15     15 LogitBoost 0.8626232  0.06186609        TL
+16     16 LogitBoost 0.8893216  0.06138759     nbCoA
+17     17 LogitBoost 0.8665679  0.06227977      ncIp
+18     18 LogitBoost 0.8616102  0.06515646       FL4
+19     19 LogitBoost 0.8619608  0.05691642       DHS
+20     20 LogitBoost 0.8701956  0.05858504      EGFS
+21     21 LogitBoost 0.8765920  0.05361675        GF
+
+--- E. Iterative High Correlation Removal ---
+Step 1: Max Corr = 0.834. Removing 'TL4' (correlated with 'FL4')
+Training with 20 variables...
+Step 2: Max Corr = 0.793. Removing 'nMS' (correlated with 'nPVS')
+Training with 19 variables...
+Step 3: Max Corr = 0.736. Removing 'FL4' (correlated with 'nVrS')
+Training with 18 variables...
+Step 4: Max Corr = 0.68. Removing 'nPVS' (correlated with 'nArT')
+Training with 17 variables...
+Step 5: Max Corr = 0.62. Removing 'nbNSpL' (correlated with 'nSpC')
+Training with 16 variables...
+Stopping: Max correlation is 0.582
+  n_vars best_model  accuracy accuracy_sd removed_var max_corr_at_step
+1     20 LogitBoost 0.8708308  0.05386900         TL4        0.8343572
+2     19 LogitBoost 0.8639143  0.06343945         nMS        0.7925986
+3     18 LogitBoost 0.8588627  0.06103842         FL4        0.7360544
+4     17 LogitBoost 0.8455906  0.06089439        nPVS        0.6803122
+5     16 LogitBoost 0.8416002  0.07290942      nbNSpL        0.6198523
+
+
+--- Test script finished successfully. ---
