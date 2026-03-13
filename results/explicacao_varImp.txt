@@ -1,0 +1,35 @@
+Explicação da Função varImp e sua Aplicação por Algoritmo
+
+Origem da Função:
+A função `varImp` utilizada no pacote `diagnoseR` (dentro de `get_var_importance`) pertence ao pacote **caret** (Classification And REgression Training). Ela é uma função genérica ("wrapper") que determina automaticamente o melhor método de cálculo de importância com base na classe do modelo fornecido.
+
+Como funciona para cada algoritmo utilizado no pacote:
+
+A `caret::varImp` atua de duas formas principais: usando informações intrínsecas do modelo (Model-Specific) ou usando um método estatístico independente (Model-Independent) quando o algoritmo não fornece métricas nativas.
+
+1. **rf (Random Forest)**
+   - **Tipo:** Específico do Modelo.
+   - **Mecanismo:** A importância é calculada nativamente pelo algoritmo Random Forest durante o treinamento. A `caret` extrai a métrica de "Mean Decrease in Gini" (diminuição média da impureza), que mede o quanto cada variável contribui para a homogeneidade dos nós nas árvores da floresta.
+
+2. **rpart (Árvore de Decisão - Recursive Partitioning)**
+   - **Tipo:** Específico do Modelo.
+   - **Mecanismo:** A importância é a soma da melhoria na pureza (goodness of split) gerada pela variável cada vez que ela é escolhida para dividir um nó. A métrica também soma a contribuição da variável quando ela atua como "surrogate" (substituta) para divisões onde a variável principal está ausente.
+
+3. **svmLinear (Support Vector Machines - Linear Kernel)**
+   - **Tipo:** Específico do Modelo.
+   - **Mecanismo:** Para SVMs lineares, existe uma relação direta entre os pesos e as variáveis. A importância é calculada baseada no valor absoluto dos coeficientes do hiperplano separador. Variáveis com coeficientes maiores têm maior peso na decisão de classificação.
+
+4. **nnet (Redes Neurais)**
+   - **Tipo:** Específico do Modelo.
+   - **Mecanismo:** A `caret` calcula a importância baseada na magnitude dos pesos das conexões da rede. Ela utiliza combinações dos valores absolutos dos pesos que ligam a variável de entrada aos neurônios ocultos e destes à saída, identificando quais entradas têm sinais mais fortes propagados pela rede.
+
+5. **knn (K-Nearest Neighbors)**
+   - **Tipo:** Independente do Modelo (Model-Independent).
+   - **Mecanismo:** O KNN baseia-se em distância e não seleciona variáveis intrinsecamente. Portanto, a `caret` não usa o modelo KNN para calcular importância. Em vez disso, ela avalia cada variável preditora individualmente. Para classificação, ela calcula a área sob a curva ROC (AUC) de cada preditor contra a classe alvo. Isso indica o quão bem aquela variável sozinha separa as classes.
+
+6. **LogitBoost (Boosted Logistic Regression)**
+   - **Tipo:** Independente do Modelo (Comportamento padrão na `caret`).
+   - **Mecanismo:** Embora seja um modelo aditivo, a interface padrão na `caret` para `LogitBoost` frequentemente não expõe estatísticas de uso de variáveis de forma padronizada. Nesses casos, a `caret` recorre ao mesmo método usado para o KNN: análise da curva ROC (AUC) para cada preditor individualmente.
+
+Nota sobre a função `get_var_importance`:
+Alguns desses métodos (especialmente os independentes do modelo como no KNN e LogitBoost) retornam valores de importância separados por classe (ex: importância para a classe A, importância para a classe B). A função `get_var_importance` do seu pacote unifica isso criando uma coluna "Overall", que assume o valor máximo de importância entre todas as classes para aquela variável.
